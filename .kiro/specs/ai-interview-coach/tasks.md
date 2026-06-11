@@ -16,7 +16,7 @@ This implementation plan follows a phased approach: Phase 1 (MVP) establishes th
     - Verify root-level `.gitignore` already exists (created pre-scaffolding) with proper exclusions for node_modules, dist, build, .env files, Python cache, virtual environments, coverage, while preserving .kiro/specs/ and documentation
     - _Requirements: 18.1, 18.5, 18.6_
 
-  - [ ] 1.2 Initialize backend project with FastAPI, Python, and install dependencies (pydantic, supabase-py, openai, google-generativeai, python-multipart, hypothesis)
+  - [x] 1.2 Initialize backend project with FastAPI, Python, and install dependencies (pydantic, supabase-py, openai, google-generativeai, python-multipart, hypothesis)
     - Create `backend/` directory with FastAPI project structure following the design's clean architecture
     - Create `app/main.py`, `app/config.py`, `app/dependencies.py`
     - Create directory structure: `api/routes/`, `api/middleware/`, `api/schemas/`, `services/`, `models/`, `repositories/`, `integrations/`, `utils/`
@@ -24,7 +24,7 @@ This implementation plan follows a phased approach: Phase 1 (MVP) establishes th
     - Create `.env.example` with `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `GEMINI_API_KEY`, `WHISPER_API_KEY`, `DATABASE_URL`, `JWT_SECRET`
     - _Requirements: 18.1, 18.3, 18.4, 18.5_
 
-  - [ ] 1.3 Set up frontend app shell with providers, routing, and layout components
+  - [x] 1.3 Set up frontend app shell with providers, routing, and layout components
     - Create `src/app/App.tsx`, `src/app/routes.tsx`, `src/app/providers.tsx` (QueryClientProvider, ThemeProvider, Router)
     - Create `src/shared/components/Layout.tsx`, `Navbar.tsx`, `Sidebar.tsx`, `LoadingSpinner.tsx`, `ErrorMessage.tsx`
     - Create `src/shared/lib/axios.ts` (Axios instance with base URL, interceptors for auth tokens and 401 handling)
