@@ -2,6 +2,7 @@ import { Menu, LogIn, User } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/shared/lib/utils";
 import { Button } from "@/shared/components/ui/button";
+import { ThemeToggle } from "@/shared/components/ThemeToggle";
 
 interface NavbarProps {
   onToggleSidebar: () => void;
@@ -37,8 +38,9 @@ export function Navbar({ onToggleSidebar, className }: NavbarProps) {
       {/* Spacer */}
       <div className="flex-1" />
 
-      {/* Auth placeholder */}
+      {/* Theme toggle + Auth placeholder */}
       <nav className="flex items-center gap-2">
+        <ThemeToggle />
         {isAuthenticated ? (
           <Button variant="ghost" size="icon" aria-label="User profile">
             <User className="h-5 w-5" />

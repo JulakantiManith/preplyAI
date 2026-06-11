@@ -40,7 +40,7 @@ This implementation plan follows a phased approach: Phase 1 (MVP) establishes th
     - Responsive layout across desktop, tablet, and mobile
     - _Requirements: 20.1, 20.2, 20.3, 20.4, 20.5, 20.6, 20.7_
 
-  - [ ] 1.5 Create ThemeToggle component and dark mode support
+  - [x] 1.5 Create ThemeToggle component and dark mode support
     - Create `src/shared/hooks/useTheme.ts` with system preference detection and localStorage persistence
     - Create `src/shared/components/ThemeToggle.tsx`
     - Configure Tailwind dark mode class strategy
