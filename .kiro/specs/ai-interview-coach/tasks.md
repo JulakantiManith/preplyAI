@@ -95,7 +95,7 @@ This implementation plan follows a phased approach: Phase 1 (MVP) establishes th
     - _Requirements: 21.1, 21.2, 21.3, 21.4, 21.5, 21.6, 21.7_
 
 - [ ] 3. Profile management feature (Phase 1)
-  - [ ] 3.1 Implement backend profile routes and service
+  - [x] 3.1 Implement backend profile routes and service
     - Create `app/api/routes/profile.py` with GET/PUT `/api/v1/profile` and POST/GET `/api/v1/profile/resume`
     - Create `app/services/profile_service.py` with profile CRUD and file upload to Supabase Storage
     - Create `app/api/schemas/profile_schemas.py` (target_role, experience_level, skills validation)
