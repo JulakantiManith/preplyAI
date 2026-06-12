@@ -60,7 +60,7 @@ This implementation plan follows a phased approach: Phase 1 (MVP) establishes th
     - Define Pydantic models matching database schema (SessionType, InterviewType, Difficulty, SessionStatus enums)
     - _Requirements: 16.1, 16.4_
 
-- [ ] 2. Authentication feature (Phase 1)
+- [x] 2. Authentication feature (Phase 1)
   - [x] 2.1 Implement backend auth routes and service
     - Create `app/api/routes/auth.py` with POST endpoints: `/api/v1/auth/register`, `/api/v1/auth/login`, `/api/v1/auth/logout`, `/api/v1/auth/forgot-password`, `/api/v1/auth/reset-password`
     - Create `app/services/auth_service.py` wrapping Supabase Auth methods
@@ -69,7 +69,7 @@ This implementation plan follows a phased approach: Phase 1 (MVP) establishes th
     - Ensure login failure returns generic error message
     - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.7, 1.8_
 
-  - [ ] 2.2 Implement frontend auth feature (login, register, forgot password, reset password pages and forms)
+  - [x] 2.2 Implement frontend auth feature (login, register, forgot password, reset password pages and forms)
     - Create `src/features/auth/schemas/authSchemas.ts` with Zod schemas for registration, login, forgot-password, reset-password
     - Create `src/features/auth/services/authService.ts` with API calls and Supabase client auth methods
     - Create `src/features/auth/hooks/useAuth.ts` with authentication state management
@@ -84,6 +84,15 @@ This implementation plan follows a phased approach: Phase 1 (MVP) establishes th
     - **Property 10: Invalid login error uniformity** — verify generic error for all invalid credential combinations
     - **Property 11: Protected route redirect** — verify 401/redirect for all protected routes when unauthenticated
     - **Validates: Requirements 1.4, 1.6, 1.8**
+
+  - [x] 2.4 Implement auth-aware navbar, logout confirmation, email verification messaging, and PublicOnlyRoute
+    - Update `src/shared/components/Navbar.tsx` to use `useAuth()` hook: show user name + logout button when authenticated, show Sign In/Register when unauthenticated
+    - Create `src/features/auth/components/LogoutConfirmDialog.tsx` using shadcn/ui AlertDialog pattern: confirmation message, Cancel and Sign Out buttons
+    - Update `src/features/auth/components/LoginForm.tsx` to detect unverified email errors from Supabase (`email_not_confirmed`) and display "Please verify your email address before signing in"
+    - Create `src/features/auth/components/PublicOnlyRoute.tsx`: redirect authenticated users to /dashboard with `replace: true`
+    - Update `src/app/routes.tsx` to wrap /login, /register, /forgot-password, /reset-password with PublicOnlyRoute
+    - Ensure both ProtectedRoute and PublicOnlyRoute use `replace: true` in Navigate for back-button protection
+    - _Requirements: 21.1, 21.2, 21.3, 21.4, 21.5, 21.6, 21.7_
 
 - [ ] 3. Profile management feature (Phase 1)
   - [ ] 3.1 Implement backend profile routes and service
@@ -369,6 +378,14 @@ This implementation plan follows a phased approach: Phase 1 (MVP) establishes th
     - Verify Supabase Storage access restricted to owning user via RLS policies
     - _Requirements: 16.1, 16.2, 16.3, 16.4_
 
+  - [ ] 16.3 Implement theme flash prevention (FOUC)
+    - Add an inline blocking `<script>` in `frontend/index.html` (inside `<head>`, before any module scripts) that reads the saved theme from `localStorage` key `theme-preference`, resolves `"system"` via `window.matchMedia("(prefers-color-scheme: dark)")`, and applies the `"dark"` or `"light"` class to `document.documentElement` synchronously
+    - The inline script must use the same `localStorage` key (`theme-preference`) and resolution logic as `ThemeContext.tsx` to ensure consistency
+    - If `localStorage` is unavailable or the stored value is invalid, fall back to the OS preferred color scheme
+    - Verify that on page load/refresh with dark mode saved, no white flash is visible before React hydrates
+    - Verify that client-side route navigation preserves the active theme class without visual flicker
+    - _Requirements: 22.1, 22.2, 22.3, 22.4, 22.5_
+
   - [ ]* 16.2 Write property tests for persistence and isolation (Properties 24, 25, 26)
     - **Property 24: Theme preference persistence round-trip** — save "light"/"dark", retrieve same value
     - **Property 25: Session data persistence round-trip** — persist and retrieve returns equivalent data
@@ -416,7 +433,7 @@ This implementation plan follows a phased approach: Phase 1 (MVP) establishes th
     { "id": 0, "tasks": ["1.1", "1.2"] },
     { "id": 1, "tasks": ["1.3", "1.4", "1.5", "1.6", "1.7"] },
     { "id": 2, "tasks": ["2.1", "2.2"] },
-    { "id": 3, "tasks": ["2.3", "3.1", "3.2"] },
+    { "id": 3, "tasks": ["2.3", "2.4", "3.1", "3.2"] },
     { "id": 4, "tasks": ["3.3", "5.1", "5.2"] },
     { "id": 5, "tasks": ["5.3", "5.4", "5.5"] },
     { "id": 6, "tasks": ["5.6", "5.7"] },
@@ -429,7 +446,7 @@ This implementation plan follows a phased approach: Phase 1 (MVP) establishes th
     { "id": 13, "tasks": ["12.2", "13.2"] },
     { "id": 14, "tasks": ["15.1"] },
     { "id": 15, "tasks": ["15.2", "15.3"] },
-    { "id": 16, "tasks": ["16.1"] },
+    { "id": 16, "tasks": ["16.1", "16.3"] },
     { "id": 17, "tasks": ["16.2"] }
   ]
 }

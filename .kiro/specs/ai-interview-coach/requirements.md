@@ -268,3 +268,29 @@ AI Interview & Presentation Coach is a modern AI-powered platform that helps stu
 5. THE footer SHALL remain responsive across desktop, tablet, and mobile devices
 6. THE footer SHALL include the current year and platform copyright information
 7. THE creator information SHALL be configurable through environment variables or application configuration rather than hardcoded values
+
+### Requirement 21: Authentication Navigation and Route Protection
+
+**User Story:** As a User, I want the navigation to reflect my authentication state and prevent access to inappropriate pages, so that my experience is seamless and secure.
+
+#### Acceptance Criteria
+
+1. WHEN a User is authenticated, THE Platform SHALL display the user's name and a Logout action in the navbar, replacing the Sign In/Register actions
+2. WHEN a User is unauthenticated, THE Platform SHALL display Sign In and Register actions in the navbar
+3. WHEN an authenticated User clicks Logout, THE Platform SHALL display a confirmation dialog before terminating the session
+4. WHEN a User confirms logout in the dialog, THE Auth_Service SHALL invalidate the session and redirect the User to the login page
+5. WHEN a User with an unverified email attempts to log in, THE Platform SHALL display "Please verify your email address before signing in" instead of the generic invalid credentials message
+6. IF an authenticated User attempts to navigate to /login, /register, /forgot-password, or /reset-password, THEN THE Platform SHALL redirect the User to /dashboard
+7. WHEN a User authenticates successfully and uses the browser Back button, THE Platform SHALL NOT expose the login or registration pages; route guards SHALL enforce correct redirects regardless of navigation method
+
+### Requirement 22: Theme Flash Prevention (FOUC)
+
+**User Story:** As a User with dark mode enabled, I want the platform to render in my saved theme immediately on page load, so that I never see a white flash that disrupts my visual experience.
+
+#### Acceptance Criteria
+
+1. WHEN a User with a saved dark mode preference loads or refreshes any page, THE Platform SHALL apply the dark theme class to the document before the first paint, preventing any visible flash of the light theme
+2. WHEN a first-time visitor loads the Platform, THE Platform SHALL detect the operating system color scheme preference and apply the corresponding theme class before the first paint
+3. THE Platform SHALL execute theme initialization synchronously via an inline blocking script in `index.html`, before React or any module scripts execute
+4. WHEN a User navigates between routes within the application, THE Platform SHALL preserve the active theme without any visual transition or flicker between pages
+5. WHEN a User refreshes the browser on any page, THE Platform SHALL render the page directly in the previously saved theme without momentarily displaying the opposite theme

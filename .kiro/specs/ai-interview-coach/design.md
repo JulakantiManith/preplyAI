@@ -109,6 +109,59 @@ sequenceDiagram
     Backend API-->>Frontend: Response
 ```
 
+### Route Guard Architecture
+
+> **Reference:** Requirement 21 (Authentication Navigation and Route Protection)
+
+The application uses two complementary route guard components to enforce access control:
+
+**ProtectedRoute** — Wraps routes that require authentication
+- If `isLoading`: render full-screen LoadingSpinner
+- If `!isAuthenticated`: redirect to `/login` with `replace: true`
+- If `isAuthenticated`: render `<Outlet />`
+
+**PublicOnlyRoute** — Wraps routes that should NOT be accessible when authenticated
+- If `isLoading`: render full-screen LoadingSpinner
+- If `isAuthenticated`: redirect to `/dashboard` with `replace: true`
+- If `!isAuthenticated`: render `<Outlet />`
+
+**Auth-Aware Navbar** — Conditional rendering based on auth state
+- Authenticated: displays user name, avatar/icon, and Logout button
+- Unauthenticated: displays Sign In and Register buttons
+
+**Logout Confirmation Dialog** — Modal triggered from navbar logout action
+- Displays confirmation message: "Are you sure you want to sign out?"
+- Two actions: "Cancel" (dismisses dialog) and "Sign Out" (calls logout, redirects to /login)
+- Uses shadcn/ui AlertDialog pattern
+
+**Email Verification Error Handling** — Login form detects Supabase `email_not_confirmed` error code
+- Displays: "Please verify your email address before signing in."
+- Does NOT fall through to the generic "Invalid email or password" message
+
+**Route Structure:**
+```
+<Routes>
+  {/* Public-only routes (redirect to dashboard if authenticated) */}
+  <Route element={<PublicOnlyRoute />}>
+    <Route path="/login" element={<LoginPage />} />
+    <Route path="/register" element={<RegisterPage />} />
+    <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+    <Route path="/reset-password" element={<ResetPasswordPage />} />
+  </Route>
+
+  {/* Protected routes (redirect to login if unauthenticated) */}
+  <Route element={<ProtectedRoute />}>
+    <Route element={<Layout />}>
+      <Route path="/dashboard" ... />
+      ...
+    </Route>
+  </Route>
+</Routes>
+```
+
+**Browser Back Button Handling:**
+- Both `ProtectedRoute` and `PublicOnlyRoute` use `replace: true` in Navigate, which replaces the history entry rather than pushing. This prevents the back button from returning to guarded pages.
+
 ### Interview Session Flow
 
 ```mermaid

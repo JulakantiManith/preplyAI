@@ -1,5 +1,11 @@
 import { Routes, Route } from "react-router-dom";
 import { Layout } from "@/shared/components/Layout";
+import { ProtectedRoute } from "@/features/auth/components/ProtectedRoute";
+import { PublicOnlyRoute } from "@/features/auth/components/PublicOnlyRoute";
+import { LoginPage } from "@/features/auth/pages/LoginPage";
+import { RegisterPage } from "@/features/auth/pages/RegisterPage";
+import { ForgotPasswordPage } from "@/features/auth/pages/ForgotPasswordPage";
+import { ResetPasswordPage } from "@/features/auth/pages/ResetPasswordPage";
 
 // Placeholder pages — will be replaced by feature modules
 function DashboardPage() {
@@ -26,10 +32,6 @@ function ProfilePage() {
   return <div className="space-y-4"><h1 className="text-2xl font-bold">Profile</h1><p className="text-muted-foreground">Manage your profile and preferences.</p></div>;
 }
 
-function LoginPage() {
-  return <div className="flex min-h-screen items-center justify-center"><div className="space-y-4 text-center"><h1 className="text-2xl font-bold">Sign In</h1><p className="text-muted-foreground">Login form will be implemented here.</p></div></div>;
-}
-
 function LandingPage() {
   return <div className="flex min-h-screen items-center justify-center"><div className="space-y-4 text-center"><h1 className="text-4xl font-bold">AI Interview & Presentation Coach</h1><p className="text-muted-foreground">Practice smarter, perform better.</p></div></div>;
 }
@@ -43,16 +45,25 @@ export function AppRoutes() {
     <Routes>
       {/* Public routes */}
       <Route path="/" element={<LandingPage />} />
-      <Route path="/login" element={<LoginPage />} />
+
+      {/* Auth routes - redirect to dashboard if already authenticated */}
+      <Route element={<PublicOnlyRoute />}>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+      </Route>
 
       {/* Authenticated routes with layout */}
-      <Route element={<Layout />}>
-        <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/interview" element={<InterviewPage />} />
-        <Route path="/presentation" element={<PresentationPage />} />
-        <Route path="/analytics" element={<AnalyticsPage />} />
-        <Route path="/history" element={<HistoryPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
+      <Route element={<ProtectedRoute />}>
+        <Route element={<Layout />}>
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/interview" element={<InterviewPage />} />
+          <Route path="/presentation" element={<PresentationPage />} />
+          <Route path="/analytics" element={<AnalyticsPage />} />
+          <Route path="/history" element={<HistoryPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+        </Route>
       </Route>
 
       {/* Catch-all */}
