@@ -121,7 +121,7 @@ This implementation plan follows a phased approach: Phase 1 (MVP) establishes th
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 5. Interview sessions feature (Phase 1)
-  - [ ] 5.1 Implement backend question generator with cache layer and fallback mechanism
+  - [x] 5.1 Implement backend question generator with cache layer and fallback mechanism
     - Create `app/services/question_cache_service.py` with cache key `{interview_type}:{role}:{topic}:{difficulty}`, configurable TTL (default 24h), and invalidation methods
     - Create `app/services/question_generator.py` that checks cache first, falls back to Gemini API on miss, stores result in cache
     - Create `app/integrations/gemini_client.py` with retry logic (1 retry, exponential backoff, 45s timeout)
