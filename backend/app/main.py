@@ -1,5 +1,6 @@
 """FastAPI application entry point."""
 
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, FastAPI
@@ -7,8 +8,15 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.middleware.error_handler import register_exception_handlers
 from app.api.routes.auth import router as auth_router
+from app.api.routes.interview import router as interview_router
 from app.api.routes.profile import router as profile_router
 from app.config import get_settings
+
+# Configure logging for development visibility
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+)
 
 # API version prefix used by all backend endpoints
 API_V1_PREFIX = "/api/v1"
@@ -18,7 +26,6 @@ API_V1_PREFIX = "/api/v1"
 async def lifespan(app: FastAPI):
     """Application lifespan handler for startup and shutdown events."""
     # Startup
-    import logging
     logger = logging.getLogger(__name__)
     settings = get_settings()
     logger.info(
@@ -41,7 +48,31 @@ def create_app() -> FastAPI:
         docs_url=f"{API_V1_PREFIX}/docs",
         redoc_url=f"{API_V1_PREFIX}/redoc",
         openapi_url=f"{API_V1_PREFIX}/openapi.json",
+        swagger_ui_init_oauth={},
     )
+
+    # Add Bearer auth to OpenAPI schema so Swagger UI shows the Authorize button
+    app.openapi_schema = None  # Reset to regenerate
+
+    original_openapi = app.openapi
+
+    def custom_openapi():
+        if app.openapi_schema:
+            return app.openapi_schema
+        schema = original_openapi()
+        schema["components"] = schema.get("components", {})
+        schema["components"]["securitySchemes"] = {
+            "BearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT",
+            }
+        }
+        schema["security"] = [{"BearerAuth": []}]
+        app.openapi_schema = schema
+        return schema
+
+    app.openapi = custom_openapi
 
     # CORS middleware
     app.add_middleware(
@@ -69,6 +100,7 @@ def create_app() -> FastAPI:
 
     # Include feature routers
     v1_router.include_router(auth_router)
+    v1_router.include_router(interview_router)
     v1_router.include_router(profile_router)
 
     # Include the versioned router

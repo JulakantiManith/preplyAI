@@ -134,7 +134,7 @@ This implementation plan follows a phased approach: Phase 1 (MVP) establishes th
     - Resume-based questions excluded from caching
     - _Requirements: 4.1, 5.1, 10.4, 17.3_
 
-  - [ ] 5.2 Implement backend transcription and session management
+  - [x] 5.2 Implement backend transcription and session management
     - Create `app/integrations/whisper_client.py` with transcription within 30 seconds, retry on failure
     - Create `app/services/transcription_service.py`
     - Create `app/services/session_service.py` (create session, submit answer, complete session)
