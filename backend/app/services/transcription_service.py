@@ -1,7 +1,9 @@
-"""Transcription service wrapping the Whisper client.
+"""Transcription service wrapping the Groq Speech-to-Text client.
 
 Provides a service-layer interface for audio-to-text conversion,
-encapsulating the WhisperClient integration and adding logging.
+encapsulating the GroqClient integration and adding logging.
+Routes and business logic interact with this service only — they
+are unaware of the underlying transcription provider.
 
 Requirements: 4.3 (transcription within 30 seconds)
 """
@@ -9,7 +11,7 @@ Requirements: 4.3 (transcription within 30 seconds)
 import logging
 from typing import Optional
 
-from app.integrations.whisper_client import WhisperClient, WhisperClientError
+from app.integrations.groq_client import GroqClient, GroqClientError
 
 logger = logging.getLogger(__name__)
 
@@ -23,17 +25,18 @@ class TranscriptionError(Exception):
 class TranscriptionService:
     """Service for converting audio recordings to text.
 
-    Wraps WhisperClient and provides a clean interface for the
-    session service to call for transcription.
+    Wraps GroqClient and provides a clean interface for the
+    session service to call for transcription. The underlying
+    provider (Groq) is hidden from consumers of this service.
     """
 
-    def __init__(self, whisper_client: Optional[WhisperClient] = None) -> None:
+    def __init__(self, groq_client: Optional[GroqClient] = None) -> None:
         """Initialize the transcription service.
 
         Args:
-            whisper_client: WhisperClient instance. Creates default if None.
+            groq_client: GroqClient instance. Creates default if None.
         """
-        self._whisper = whisper_client or WhisperClient()
+        self._client = groq_client or GroqClient()
 
     async def transcribe_audio(
         self,
@@ -43,7 +46,7 @@ class TranscriptionService:
     ) -> str:
         """Transcribe audio data to text.
 
-        Delegates to WhisperClient which handles retry logic and
+        Delegates to GroqClient which handles retry logic and
         30-second timeout enforcement.
 
         Args:
@@ -67,7 +70,7 @@ class TranscriptionService:
         )
 
         try:
-            transcript = await self._whisper.transcribe(
+            transcript = await self._client.transcribe(
                 audio_data=audio_data,
                 filename=filename,
                 language=language,
@@ -78,6 +81,6 @@ class TranscriptionService:
                 len(transcript.split()),
             )
             return transcript
-        except WhisperClientError as e:
+        except GroqClientError as e:
             logger.error("Transcription failed: %s", str(e))
             raise TranscriptionError(f"Failed to transcribe audio: {e}") from e

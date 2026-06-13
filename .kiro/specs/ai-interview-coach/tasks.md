@@ -143,7 +143,7 @@ This implementation plan follows a phased approach: Phase 1 (MVP) establishes th
     - Create `app/api/schemas/interview_schemas.py`
     - _Requirements: 4.2, 4.3, 4.6, 16.1, 16.3_
 
-  - [ ] 5.3 Implement backend speech analysis service
+  - [x] 5.3 Implement backend speech analysis service
     - Create `app/services/speech_analysis_service.py` with `analyze(transcript, duration_seconds)` method
     - Compute WPM = total_words / (duration / 60), rounded to nearest integer
     - Detect filler words (um, uh, like, actually, basically, you know) with per-word counts

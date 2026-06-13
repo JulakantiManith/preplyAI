@@ -86,7 +86,7 @@ async def submit_answer(
 ):
     """Submit an answer to a session question with audio recording.
 
-    Accepts audio as multipart form data, transcribes it via Whisper,
+    Accepts audio as multipart form data, transcribes it via Groq Speech-to-Text,
     and stores the answer with transcript. Speech analysis and AI feedback
     are computed asynchronously by separate services.
     """

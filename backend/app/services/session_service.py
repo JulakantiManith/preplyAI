@@ -178,7 +178,7 @@ class SessionService:
 
         Flow:
         1. Verify session exists and belongs to user
-        2. Transcribe audio via Whisper
+        2. Transcribe audio via Groq Speech-to-Text
         3. Create answer record with transcript
         4. Return answer with transcript
 
