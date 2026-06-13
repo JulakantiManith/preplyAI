@@ -10,6 +10,7 @@ from app.api.middleware.error_handler import register_exception_handlers
 from app.api.routes.auth import router as auth_router
 from app.api.routes.interview import router as interview_router
 from app.api.routes.profile import router as profile_router
+from app.api.routes.sessions import router as sessions_router
 from app.config import get_settings
 
 # Configure logging for development visibility
@@ -102,6 +103,7 @@ def create_app() -> FastAPI:
     v1_router.include_router(auth_router)
     v1_router.include_router(interview_router)
     v1_router.include_router(profile_router)
+    v1_router.include_router(sessions_router)
 
     # Include the versioned router
     app.include_router(v1_router)
