@@ -120,7 +120,7 @@ This implementation plan follows a phased approach: Phase 1 (MVP) establishes th
 - [x] 4. Checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 5. Interview sessions feature (Phase 1)
+- [x] 5. Interview sessions feature (Phase 1)
   - [x] 5.1 Implement backend question generator with cache layer and fallback mechanism
     - Create `app/services/question_cache_service.py` with cache key `{interview_type}:{role}:{topic}:{difficulty}`, configurable TTL (default 24h), and invalidation methods
     - Create `app/services/question_generator.py` that checks cache first, falls back to Gemini API on miss, stores result in cache
@@ -178,7 +178,7 @@ This implementation plan follows a phased approach: Phase 1 (MVP) establishes th
     - Display score breakdown: technical accuracy, completeness, communication
     - _Requirements: 5.1, 5.2, 5.3, 5.4_
 
-  - [ ] 5.7 Implement frontend interview setup and session flow
+  - [x] 5.7 Implement frontend interview setup and session flow
     - Create `src/features/interview/schemas/interviewSchemas.ts` (Zod schemas for interview config)
     - Create `src/features/interview/services/interviewService.ts` (API calls for session lifecycle)
     - Create `src/features/interview/hooks/useInterview.ts` (session state management)
@@ -209,7 +209,7 @@ This implementation plan follows a phased approach: Phase 1 (MVP) establishes th
     - **Property 8: Feedback minimum structure** — at least 2 strengths, 2 weaknesses, 3 recommendations
     - **Validates: Requirements 9.3, 10.2**
 
-- [ ] 6. Checkpoint - Ensure all tests pass
+- [x] 6. Checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 7. Dashboard feature (Phase 1)

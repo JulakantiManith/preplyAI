@@ -30,10 +30,10 @@ apiClient.interceptors.response.use(
     if (axios.isAxiosError(error) && error.response?.status === 401) {
       // Only retry once to avoid infinite loops
       const originalRequest = error.config;
-      if (!originalRequest || (originalRequest as Record<string, unknown>)._retry) {
+      if (!originalRequest || (originalRequest as unknown as Record<string, unknown>)._retry) {
         return Promise.reject(error);
       }
-      (originalRequest as Record<string, unknown>)._retry = true;
+      (originalRequest as unknown as Record<string, unknown>)._retry = true;
 
       // Attempt token refresh
       const { error: refreshError } = await supabase.auth.refreshSession();

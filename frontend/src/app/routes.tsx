@@ -7,14 +7,12 @@ import { RegisterPage } from "@/features/auth/pages/RegisterPage";
 import { ForgotPasswordPage } from "@/features/auth/pages/ForgotPasswordPage";
 import { ResetPasswordPage } from "@/features/auth/pages/ResetPasswordPage";
 import { ProfilePage } from "@/features/profile/pages/ProfilePage";
+import { InterviewSetupPage } from "@/features/interview/pages/InterviewSetupPage";
+import { InterviewSessionPage } from "@/features/interview/pages/InterviewSessionPage";
 
 // Placeholder pages — will be replaced by feature modules
 function DashboardPage() {
   return <div className="space-y-4"><h1 className="text-2xl font-bold">Dashboard</h1><p className="text-muted-foreground">Your practice overview will appear here.</p></div>;
-}
-
-function InterviewPage() {
-  return <div className="space-y-4"><h1 className="text-2xl font-bold">Interview Practice</h1><p className="text-muted-foreground">Start a new interview session.</p></div>;
 }
 
 function PresentationPage() {
@@ -55,7 +53,8 @@ export function AppRoutes() {
       <Route element={<ProtectedRoute />}>
         <Route element={<Layout />}>
           <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/interview" element={<InterviewPage />} />
+          <Route path="/interview" element={<InterviewSetupPage />} />
+          <Route path="/interview/session/:sessionId" element={<InterviewSessionPage />} />
           <Route path="/presentation" element={<PresentationPage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />
           <Route path="/history" element={<HistoryPage />} />

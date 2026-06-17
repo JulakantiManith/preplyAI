@@ -4,11 +4,14 @@ Provides a resilient interface to Groq's Whisper-based Speech-to-Text API
 for converting audio recordings to text. Implements 1 retry with exponential
 backoff and a 30-second timeout per request.
 
+Returns word-level timestamps for hesitation/pause detection.
+
 Requirements: 4.3 (transcription within 30 seconds), 17.3 (retry once on failure)
 """
 
 import asyncio
 import logging
+from dataclasses import dataclass, field
 from typing import Optional
 
 from groq import AsyncGroq, APIError, APITimeoutError, RateLimitError, AuthenticationError
@@ -28,16 +31,28 @@ BASE_BACKOFF_SECONDS = 2.0
 GROQ_STT_MODEL = "whisper-large-v3-turbo"
 
 
+@dataclass
+class WordTimestamp:
+    """A single word with its start and end time."""
+
+    word: str
+    start: float
+    end: float
+
+
+@dataclass
+class TranscriptionResult:
+    """Result of transcription including text and word timestamps."""
+
+    text: str
+    words: list[WordTimestamp] = field(default_factory=list)
+    duration: float = 0.0
+
+
 class GroqClientError(Exception):
     """Raised when Groq API call fails after all retries."""
 
     def __init__(self, message: str, is_retryable: bool = True) -> None:
-        """Initialize with message and retryable flag.
-
-        Args:
-            message: Error description.
-            is_retryable: Whether the error is transient and may succeed on retry.
-        """
         super().__init__(message)
         self.is_retryable = is_retryable
 
@@ -45,29 +60,15 @@ class GroqClientError(Exception):
 class GroqClient:
     """Client for Groq Speech-to-Text API with retry and timeout logic.
 
-    Implements:
-    - 1 retry with exponential backoff on transient failures (Req 17.3)
-    - 30-second timeout per request (Req 4.3)
-    - Structured logging of failures for monitoring
-    - Graceful handling of invalid API key, rate limits, network failures,
-      timeouts, and invalid audio files
+    Returns word-level timestamps for hesitation/pause detection.
     """
 
     def __init__(self) -> None:
-        """Initialize the Groq client with API key from settings."""
         settings = get_settings()
         self._api_key = settings.groq_api_key
         self._client: Optional[AsyncGroq] = None
 
     def _get_client(self) -> AsyncGroq:
-        """Get or create the AsyncGroq client instance.
-
-        Returns:
-            Configured AsyncGroq client.
-
-        Raises:
-            GroqClientError: If API key is not configured.
-        """
         if self._client is None:
             if not self._api_key:
                 raise GroqClientError(
@@ -85,20 +86,16 @@ class GroqClient:
         audio_data: bytes,
         filename: str = "audio.webm",
         language: Optional[str] = None,
-    ) -> str:
-        """Transcribe audio data to text via Groq Speech-to-Text with retry logic.
-
-        Implements 1 retry with exponential backoff for transient errors.
-        Enforces a 30-second timeout per request as required by Requirement 4.3.
-        Non-retryable errors (invalid API key, invalid audio) fail immediately.
+    ) -> TranscriptionResult:
+        """Transcribe audio data to text with word-level timestamps.
 
         Args:
             audio_data: Raw audio bytes to transcribe.
-            filename: Filename hint for the audio format (e.g., "audio.webm").
-            language: Optional language code (e.g., "en") to improve accuracy.
+            filename: Filename hint for the audio format.
+            language: Optional language code.
 
         Returns:
-            Transcribed text string.
+            TranscriptionResult with text and word timestamps.
 
         Raises:
             GroqClientError: If transcription fails after all retries.
@@ -113,11 +110,10 @@ class GroqClient:
 
         for attempt in range(MAX_RETRIES + 1):
             try:
-                transcript = await self._call_groq(audio_data, filename, language)
-                return transcript
+                result = await self._call_groq(audio_data, filename, language)
+                return result
             except GroqClientError as e:
                 last_error = e
-                # Don't retry non-retryable errors (auth, invalid audio)
                 if not e.is_retryable:
                     logger.error("Groq API non-retryable error: %s", str(e))
                     raise
@@ -163,61 +159,32 @@ class GroqClient:
         audio_data: bytes,
         filename: str,
         language: Optional[str],
-    ) -> str:
-        """Make a single transcription request to Groq API with timeout.
-
-        Args:
-            audio_data: Raw audio bytes.
-            filename: Filename hint for audio format.
-            language: Optional language code.
-
-        Returns:
-            Transcribed text.
-
-        Raises:
-            asyncio.TimeoutError: If the request exceeds the timeout.
-            GroqClientError: If the API returns an error.
-        """
+    ) -> TranscriptionResult:
+        """Make a single transcription request to Groq API."""
         client = self._get_client()
 
         try:
-            transcript = await asyncio.wait_for(
+            result = await asyncio.wait_for(
                 self._send_transcription_request(client, audio_data, filename, language),
                 timeout=REQUEST_TIMEOUT,
             )
-            return transcript
+            return result
         except asyncio.TimeoutError:
-            logger.warning(
-                "Groq API request timed out after %.0fs", REQUEST_TIMEOUT
-            )
+            logger.warning("Groq API request timed out after %.0fs", REQUEST_TIMEOUT)
             raise
         except AuthenticationError as e:
-            raise GroqClientError(
-                f"Invalid Groq API key: {e}",
-                is_retryable=False,
-            ) from e
+            raise GroqClientError(f"Invalid Groq API key: {e}", is_retryable=False) from e
         except RateLimitError as e:
-            raise GroqClientError(
-                f"Groq API rate limit exceeded: {e}",
-                is_retryable=True,
-            ) from e
+            raise GroqClientError(f"Groq API rate limit exceeded: {e}", is_retryable=True) from e
         except APITimeoutError as e:
-            raise GroqClientError(
-                f"Groq API timeout: {e}",
-                is_retryable=True,
-            ) from e
+            raise GroqClientError(f"Groq API timeout: {e}", is_retryable=True) from e
         except APIError as e:
-            # Check for invalid audio (400 errors)
             status_code = getattr(e, "status_code", None)
             if status_code == 400:
                 raise GroqClientError(
-                    f"Invalid audio file or unsupported format: {e}",
-                    is_retryable=False,
+                    f"Invalid audio file or unsupported format: {e}", is_retryable=False
                 ) from e
-            raise GroqClientError(
-                f"Groq API error: {e}",
-                is_retryable=True,
-            ) from e
+            raise GroqClientError(f"Groq API error: {e}", is_retryable=True) from e
 
     async def _send_transcription_request(
         self,
@@ -225,24 +192,43 @@ class GroqClient:
         audio_data: bytes,
         filename: str,
         language: Optional[str],
-    ) -> str:
-        """Send the actual transcription request to Groq.
-
-        Args:
-            client: AsyncGroq client instance.
-            audio_data: Raw audio bytes.
-            filename: Filename hint.
-            language: Optional language code.
-
-        Returns:
-            Transcribed text from the response.
-        """
+    ) -> TranscriptionResult:
+        """Send transcription request with verbose_json and word timestamps."""
         kwargs: dict = {
             "model": GROQ_STT_MODEL,
             "file": (filename, audio_data),
+            "response_format": "verbose_json",
+            "timestamp_granularities": ["word", "segment"],
+            "prompt": (
+                "Transcribe verbatim including all filler words such as um, uh, "
+                "like, you know, basically, actually, so, and any hesitations."
+            ),
         }
         if language:
             kwargs["language"] = language
 
         response = await client.audio.transcriptions.create(**kwargs)
-        return response.text
+
+        # Extract word-level timestamps
+        words: list[WordTimestamp] = []
+        duration = 0.0
+
+        # verbose_json returns words in response.words
+        if hasattr(response, "words") and response.words:
+            for w in response.words:
+                words.append(WordTimestamp(
+                    word=w.word.strip() if hasattr(w, "word") else str(w.get("word", "")).strip(),
+                    start=float(w.start) if hasattr(w, "start") else float(w.get("start", 0)),
+                    end=float(w.end) if hasattr(w, "end") else float(w.get("end", 0)),
+                ))
+            if words:
+                duration = words[-1].end
+
+        # Fallback: get duration from segments
+        if duration == 0.0 and hasattr(response, "segments") and response.segments:
+            last_seg = response.segments[-1]
+            duration = float(last_seg.end) if hasattr(last_seg, "end") else float(last_seg.get("end", 0))
+
+        text = response.text if hasattr(response, "text") else ""
+
+        return TranscriptionResult(text=text, words=words, duration=duration)

@@ -129,7 +129,13 @@ class GeminiClient:
             prompt_parts.append(f"Difficulty level: {difficulty}.")
 
         prompt_parts.append(
-            "\nEnsure questions cover different aspects and increase in complexity."
+            "\nIMPORTANT: These questions are for a VERBAL/SPOKEN interview practice session. "
+            "The candidate will answer by speaking aloud, NOT by writing code. "
+            "Do NOT generate coding challenges, implementation tasks, or questions that require "
+            "writing code on a whiteboard. Instead, focus on conceptual understanding, "
+            "explanation of concepts, design discussion, problem-solving approach, "
+            "and real-world application questions that can be answered verbally."
+            "\n\nEnsure questions cover different aspects and increase in complexity."
             "\nInclude a mix of conceptual, situational, and practical questions."
             "\nReturn the questions as a JSON array of objects with the following fields:"
             '\n- "text": the question text (string, required)'

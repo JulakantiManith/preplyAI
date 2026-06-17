@@ -117,9 +117,19 @@ class ScoreSummary(BaseModel):
     communication_score: Optional[int] = None
 
 
+class FeedbackResponse(BaseModel):
+    """AI-generated feedback in session completion response."""
+
+    strengths: list[str] = Field(default_factory=list)
+    weaknesses: list[str] = Field(default_factory=list)
+    recommendations: list[str] = Field(default_factory=list)
+    technical_evaluation: Optional[dict[str, Any]] = None
+
+
 class CompleteSessionResponse(BaseModel):
     """Response for session completion endpoint."""
 
     session: SessionResponse
     total_answers: int
     scores: ScoreSummary
+    feedback: Optional[FeedbackResponse] = None

@@ -119,8 +119,14 @@ async def submit_answer(
             detail="Session not found or access denied",
         )
     except SessionServiceError as e:
+        error_msg = str(e)
+        if "completed session" in error_msg.lower():
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Session is already completed. Cannot submit more answers.",
+            )
         logger.error(
-            "Failed to submit answer for session %s: %s", session_id, str(e)
+            "Failed to submit answer for session %s: %s", session_id, error_msg
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

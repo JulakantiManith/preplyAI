@@ -168,25 +168,31 @@ class SessionRepository:
         return self._retry_write("update_session", _update)
 
     def create_answer(self, answer_data: dict) -> dict:
-        """Create a new answer record in the database.
+        """Create or update an answer record in the database.
+
+        Uses upsert on (session_id, question_index) so re-submitting
+        an answer for the same question (e.g., after page refresh)
+        updates the existing row instead of failing with a conflict.
 
         Args:
             answer_data: Answer data dict matching the answers table schema.
 
         Returns:
-            Created answer record from the database.
+            Created or updated answer record from the database.
 
         Raises:
-            RepositoryError: If creation fails after retry.
+            RepositoryError: If operation fails after retry.
         """
 
-        def _create() -> dict:
+        def _upsert() -> dict:
             response = (
-                self._client.table("answers").insert(answer_data).execute()
+                self._client.table("answers")
+                .upsert(answer_data, on_conflict="session_id,question_index")
+                .execute()
             )
             return response.data[0]
 
-        return self._retry_write("create_answer", _create)
+        return self._retry_write("create_answer", _upsert)
 
     def update_answer(self, answer_id: UUID, updates: dict) -> dict:
         """Update an answer record with retry on failure.
