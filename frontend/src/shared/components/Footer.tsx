@@ -9,6 +9,7 @@ export function Footer({ className }: FooterProps) {
   const creatorName = import.meta.env.VITE_CREATOR_NAME || "Creator";
   const githubUrl = import.meta.env.VITE_GITHUB_URL || "#";
   const linkedinUrl = import.meta.env.VITE_LINKEDIN_URL || "#";
+  const appName = import.meta.env.VITE_APP_NAME || "AI Interview & Presentation Coach";
   const currentYear = new Date().getFullYear();
 
   return (
@@ -52,7 +53,7 @@ export function Footer({ className }: FooterProps) {
 
         {/* Copyright */}
         <p className="text-sm text-muted-foreground">
-          &copy; {currentYear} AI Interview &amp; Presentation Coach
+          &copy; {currentYear} {appName}
         </p>
       </div>
     </footer>

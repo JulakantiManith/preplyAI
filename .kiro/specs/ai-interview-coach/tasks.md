@@ -282,8 +282,8 @@ This implementation plan follows a phased approach: Phase 1 (MVP) establishes th
     - **Property 21: Session list entries include required fields** — non-null session_type, created_at, duration_seconds, overall_score
     - **Validates: Requirements 3.2, 3.3, 11.1, 11.3, 11.4, 12.1, 12.2, 12.4, 12.5**
 
-- [ ] 9. Landing page feature (Phase 1)
-  - [ ] 9.1 Implement frontend landing page
+- [x] 9. Landing page feature (Phase 1)
+  - [x] 9.1 Implement frontend landing page
     - Create `src/features/landing/components/Hero.tsx` (hero section with CTA)
     - Create `src/features/landing/components/Features.tsx` (features section)
     - Create `src/features/landing/components/HowItWorks.tsx`

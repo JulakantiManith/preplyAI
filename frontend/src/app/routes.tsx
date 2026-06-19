@@ -13,13 +13,10 @@ import { DashboardPage } from "@/features/dashboard/pages/DashboardPage";
 import { AnalyticsPage } from "@/features/analytics/pages/AnalyticsPage";
 import { HistoryPage } from "@/features/history/pages/HistoryPage";
 import { SessionDetailPage } from "@/features/history/pages/SessionDetailPage";
+import { LandingPage } from "@/features/landing/pages/LandingPage";
 
 function PresentationPage() {
   return <div className="space-y-4"><h1 className="text-2xl font-bold">Presentation Practice</h1><p className="text-muted-foreground">Practice your presentation skills.</p></div>;
-}
-
-function LandingPage() {
-  return <div className="flex min-h-screen items-center justify-center"><div className="space-y-4 text-center"><h1 className="text-4xl font-bold">AI Interview & Presentation Coach</h1><p className="text-muted-foreground">Practice smarter, perform better.</p></div></div>;
 }
 
 function NotFoundPage() {
