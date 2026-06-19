@@ -236,7 +236,7 @@ This implementation plan follows a phased approach: Phase 1 (MVP) establishes th
     - **Validates: Requirements 3.1**
 
 - [ ] 8. Analytics and session history features (Phase 1)
-  - [ ] 8.1 Implement backend analytics progress and trends endpoints
+  - [x] 8.1 Implement backend analytics progress and trends endpoints
     - Extend `app/api/routes/analytics.py` with GET `/api/v1/analytics/progress` and GET `/api/v1/analytics/trends`
     - Create `app/api/schemas/analytics_schemas.py` (time range filters, response schemas)
     - Implement daily/weekly/monthly bucketing
@@ -244,7 +244,7 @@ This implementation plan follows a phased approach: Phase 1 (MVP) establishes th
     - Filter metrics by selected time range
     - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.5_
 
-  - [ ] 8.2 Implement frontend analytics feature
+  - [x] 8.2 Implement frontend analytics feature
     - Create `src/features/analytics/services/analyticsService.ts`
     - Create `src/features/analytics/hooks/useAnalytics.ts`
     - Create `src/features/analytics/components/ScoreTrendChart.tsx` (Recharts line charts)

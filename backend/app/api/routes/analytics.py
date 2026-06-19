@@ -5,7 +5,13 @@ from enum import Enum
 
 from fastapi import APIRouter, HTTPException, Query, status
 
-from app.api.schemas.analytics_schemas import AnalyticsOverviewResponse, RecentSession
+from app.api.schemas.analytics_schemas import (
+    AnalyticsOverviewResponse,
+    AnalyticsProgressResponse,
+    AnalyticsTrendsResponse,
+    ProgressDataPoint,
+    RecentSession,
+)
 from app.dependencies import CurrentUserDep
 from app.repositories.session_repository import RepositoryError
 from app.services.analytics_service import get_analytics_service
@@ -87,4 +93,121 @@ async def get_analytics_overview(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to retrieve analytics data",
+        ) from e
+
+
+@router.get(
+    "/progress",
+    response_model=AnalyticsProgressResponse,
+    summary="Get analytics progress data",
+)
+async def get_analytics_progress(
+    current_user_id: CurrentUserDep,
+    time_range: TimeRange = Query(
+        default=TimeRange.WEEKLY,
+        description="Time range for progress data: daily, weekly, monthly, 3months, yearly",
+    ),
+):
+    """Get session frequency and average score data for the progress chart.
+
+    Returns bucketed session counts and average overall scores for bar
+    chart display. Buckets are grouped by day for daily/weekly ranges,
+    by ISO week for monthly, and by month for 3months/yearly.
+
+    Includes has_enough_data flag (true when >= 3 total sessions) so
+    the frontend can show an encouraging message for new users.
+    """
+    try:
+        analytics_service = get_analytics_service()
+        result = analytics_service.get_progress(
+            user_id=current_user_id, time_range=time_range.value
+        )
+
+        data_points = [
+            ProgressDataPoint(
+                period=dp["period"],
+                session_count=dp["session_count"],
+                average_score=dp["average_score"],
+            )
+            for dp in result["data_points"]
+        ]
+
+        return AnalyticsProgressResponse(
+            has_sessions=result["has_sessions"],
+            has_enough_data=result["has_enough_data"],
+            data_points=data_points,
+        )
+    except RepositoryError as e:
+        logger.error(
+            "Repository error fetching progress for user %s: %s",
+            current_user_id,
+            str(e),
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve progress data",
+        ) from e
+    except Exception as e:
+        logger.error(
+            "Unexpected error fetching progress for user %s: %s",
+            current_user_id,
+            str(e),
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve progress data",
+        ) from e
+
+
+@router.get(
+    "/trends",
+    response_model=AnalyticsTrendsResponse,
+    summary="Get analytics score trends",
+)
+async def get_analytics_trends(
+    current_user_id: CurrentUserDep,
+    time_range: TimeRange = Query(
+        default=TimeRange.WEEKLY,
+        description="Time range for trends data: daily, weekly, monthly, 3months, yearly",
+    ),
+):
+    """Get score trend data for overall, confidence, and communication scores.
+
+    Returns independent trend series for each score category, suitable for
+    line chart display. Each series contains bucketed average scores over
+    the selected time range.
+
+    Includes has_enough_data flag (true when >= 3 total sessions) so
+    the frontend can show an encouraging message for new users.
+    """
+    try:
+        analytics_service = get_analytics_service()
+        result = analytics_service.get_trends(
+            user_id=current_user_id, time_range=time_range.value
+        )
+
+        return AnalyticsTrendsResponse(
+            has_sessions=result["has_sessions"],
+            has_enough_data=result["has_enough_data"],
+            trends=result["trends"],
+        )
+    except RepositoryError as e:
+        logger.error(
+            "Repository error fetching trends for user %s: %s",
+            current_user_id,
+            str(e),
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve trends data",
+        ) from e
+    except Exception as e:
+        logger.error(
+            "Unexpected error fetching trends for user %s: %s",
+            current_user_id,
+            str(e),
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve trends data",
         ) from e

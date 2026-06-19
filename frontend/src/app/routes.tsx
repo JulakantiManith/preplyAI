@@ -10,13 +10,10 @@ import { ProfilePage } from "@/features/profile/pages/ProfilePage";
 import { InterviewSetupPage } from "@/features/interview/pages/InterviewSetupPage";
 import { InterviewSessionPage } from "@/features/interview/pages/InterviewSessionPage";
 import { DashboardPage } from "@/features/dashboard/pages/DashboardPage";
+import { AnalyticsPage } from "@/features/analytics/pages/AnalyticsPage";
 
 function PresentationPage() {
   return <div className="space-y-4"><h1 className="text-2xl font-bold">Presentation Practice</h1><p className="text-muted-foreground">Practice your presentation skills.</p></div>;
-}
-
-function AnalyticsPage() {
-  return <div className="space-y-4"><h1 className="text-2xl font-bold">Analytics</h1><p className="text-muted-foreground">Track your progress over time.</p></div>;
 }
 
 function HistoryPage() {

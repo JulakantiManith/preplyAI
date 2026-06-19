@@ -162,6 +162,74 @@ class AnalyticsRepository:
                 f"Failed to get sessions for date range: {e}"
             ) from e
 
+    def get_sessions_with_all_scores(
+        self, user_id: str, start_date: str, end_date: str
+    ) -> list[dict]:
+        """Get completed sessions with all score fields within a date range.
+
+        Fetches overall_score, confidence_score, communication_score and
+        completed_at for progress and trends computation.
+
+        Args:
+            user_id: The owning user's ID.
+            start_date: ISO format start date (inclusive).
+            end_date: ISO format end date (inclusive).
+
+        Returns:
+            List of session dicts with all score fields and completed_at.
+        """
+        try:
+            response = (
+                self._client.table("sessions")
+                .select(
+                    "overall_score, confidence_score, communication_score, completed_at"
+                )
+                .eq("user_id", user_id)
+                .eq("status", "completed")
+                .gte("completed_at", start_date)
+                .lte("completed_at", end_date)
+                .order("completed_at")
+                .execute()
+            )
+            return response.data or []
+        except Exception as e:
+            logger.error(
+                "Failed to get sessions with all scores for user %s: %s",
+                user_id,
+                str(e),
+            )
+            raise RepositoryError(
+                f"Failed to get sessions with all scores: {e}"
+            ) from e
+
+    def get_total_completed_sessions_count(self, user_id: str) -> int:
+        """Get total count of completed sessions for a user.
+
+        Args:
+            user_id: The owning user's ID.
+
+        Returns:
+            Total count of completed sessions.
+        """
+        try:
+            response = (
+                self._client.table("sessions")
+                .select("id", count="exact")
+                .eq("user_id", user_id)
+                .eq("status", "completed")
+                .execute()
+            )
+            return response.count or 0
+        except Exception as e:
+            logger.error(
+                "Failed to get total session count for user %s: %s",
+                user_id,
+                str(e),
+            )
+            raise RepositoryError(
+                f"Failed to get total session count: {e}"
+            ) from e
+
     def get_recent_sessions(self, user_id: str, limit: int = 5) -> list[dict]:
         """Get the most recent completed sessions.
 
