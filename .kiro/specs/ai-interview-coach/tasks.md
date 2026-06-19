@@ -255,7 +255,7 @@ This implementation plan follows a phased approach: Phase 1 (MVP) establishes th
     - Show encouraging message when fewer than 3 sessions
     - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.5_
 
-  - [ ] 8.3 Implement backend session history endpoints
+  - [x] 8.3 Implement backend session history endpoints
     - Create `app/api/routes/history.py` with GET `/api/v1/history` (paginated, filtered) and GET `/api/v1/history/{id}` (full detail)
     - Implement pagination (20 per page), sorting by date descending
     - Implement filtering by session_type and date_range
@@ -263,7 +263,7 @@ This implementation plan follows a phased approach: Phase 1 (MVP) establishes th
     - Return full transcript, all scores, AI feedback, and metadata for detail view
     - _Requirements: 12.1, 12.2, 12.3, 12.4, 12.5_
 
-  - [ ] 8.4 Implement frontend session history feature
+  - [x] 8.4 Implement frontend session history feature
     - Create `src/features/history/services/historyService.ts`
     - Create `src/features/history/hooks/useSessionHistory.ts`
     - Create `src/features/history/components/SessionList.tsx` (paginated list)

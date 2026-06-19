@@ -412,6 +412,11 @@ class SessionService:
                     answers=answers,
                     session_id=str(session_id),
                 )
+                # Persist if not already saved
+                try:
+                    self._repository.create_session_feedback(session_id, feedback_data)
+                except RepositoryError:
+                    pass  # May already exist
             except Exception as e:
                 logger.warning(
                     "Failed to generate feedback for already-completed session %s: %s",
@@ -468,7 +473,7 @@ class SessionService:
             scores.get("overall_score"),
         )
 
-        # Step 5: Generate AI feedback
+        # Step 5: Generate AI feedback and persist it
         feedback_data = None
         try:
             feedback_data = await self._generate_session_feedback(
@@ -483,6 +488,16 @@ class SessionService:
                 len(feedback_data.get("weaknesses", [])),
                 len(feedback_data.get("recommendations", [])),
             )
+            # Persist feedback to session_feedback table
+            try:
+                self._repository.create_session_feedback(session_id, feedback_data)
+                logger.info("Feedback persisted for session %s", session_id)
+            except RepositoryError as e:
+                logger.warning(
+                    "Failed to persist feedback for session %s (non-fatal): %s",
+                    session_id,
+                    str(e),
+                )
         except Exception as e:
             logger.warning(
                 "Failed to generate AI feedback for session %s (non-fatal): %s",

@@ -304,3 +304,36 @@ class SessionRepository:
                 "Failed to get questions for session %s: %s", session_id, str(e)
             )
             raise RepositoryError(f"Failed to get session questions: {e}") from e
+
+    def create_session_feedback(self, session_id: UUID, feedback_data: dict) -> dict:
+        """Save AI-generated feedback for a session.
+
+        Args:
+            session_id: The session UUID.
+            feedback_data: Dict with strengths, weaknesses, recommendations,
+                          and optional technical_evaluation/presentation_scores.
+
+        Returns:
+            The created feedback record.
+
+        Raises:
+            RepositoryError: If save fails after retry.
+        """
+        record = {
+            "session_id": str(session_id),
+            "strengths": feedback_data.get("strengths", []),
+            "weaknesses": feedback_data.get("weaknesses", []),
+            "recommendations": feedback_data.get("recommendations", []),
+        }
+        if feedback_data.get("technical_evaluation"):
+            record["technical_evaluation"] = feedback_data["technical_evaluation"]
+        if feedback_data.get("presentation_scores"):
+            record["presentation_scores"] = feedback_data["presentation_scores"]
+
+        def _create() -> dict:
+            response = self._client.table("session_feedback").insert(record).execute()
+            if not response.data:
+                raise RepositoryError("No data returned from feedback insert")
+            return response.data[0]
+
+        return self._retry_write("create_session_feedback", _create)

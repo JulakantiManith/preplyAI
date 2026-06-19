@@ -11,13 +11,11 @@ import { InterviewSetupPage } from "@/features/interview/pages/InterviewSetupPag
 import { InterviewSessionPage } from "@/features/interview/pages/InterviewSessionPage";
 import { DashboardPage } from "@/features/dashboard/pages/DashboardPage";
 import { AnalyticsPage } from "@/features/analytics/pages/AnalyticsPage";
+import { HistoryPage } from "@/features/history/pages/HistoryPage";
+import { SessionDetailPage } from "@/features/history/pages/SessionDetailPage";
 
 function PresentationPage() {
   return <div className="space-y-4"><h1 className="text-2xl font-bold">Presentation Practice</h1><p className="text-muted-foreground">Practice your presentation skills.</p></div>;
-}
-
-function HistoryPage() {
-  return <div className="space-y-4"><h1 className="text-2xl font-bold">Session History</h1><p className="text-muted-foreground">Review your past sessions.</p></div>;
 }
 
 function LandingPage() {
@@ -51,6 +49,7 @@ export function AppRoutes() {
           <Route path="/presentation" element={<PresentationPage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />
           <Route path="/history" element={<HistoryPage />} />
+          <Route path="/history/:sessionId" element={<SessionDetailPage />} />
           <Route path="/profile" element={<ProfilePage />} />
         </Route>
       </Route>
