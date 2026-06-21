@@ -351,15 +351,15 @@ This implementation plan follows a phased approach: Phase 1 (MVP) establishes th
 - [x] 14. Checkpoint - Ensure all Phase 2 tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 15. Eye contact and head pose analysis (Phase 3)
-  - [ ] 15.1 Implement backend MediaPipe integration for eye contact and head pose
+- [x] 15. Eye contact and head pose analysis (Phase 3)
+  - [x] 15.1 Implement backend MediaPipe integration for eye contact and head pose
     - Create `app/integrations/mediapipe_client.py` with face mesh and gaze detection
     - Implement eye contact percentage calculation (camera frames / total frames × 100)
     - Implement head pose estimation (pitch, yaw, roll) with stability classification
     - Handle face not detected / low lighting with warning response
     - _Requirements: 13.1, 13.2, 13.3, 13.4, 13.5_
 
-  - [ ] 15.2 Implement frontend visual analysis display
+  - [x] 15.2 Implement frontend visual analysis display
     - Add real-time eye gaze overlay during video sessions
     - Display eye contact percentage and head movement stability metrics in session reports
     - Display lighting/positioning warnings during recording

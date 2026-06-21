@@ -36,10 +36,32 @@ class CreatePresentationSessionRequest(BaseModel):
     )
 
 
-class CompletePresentationRequest(BaseModel):
-    """Request body for completing a presentation session (extensible)."""
+class VisualMetricsInput(BaseModel):
+    """Client-side face tracking metrics (aggregate only, no landmarks/frame data)."""
 
-    pass
+    eye_contact_percentage: float = Field(ge=0, le=100)
+    face_visibility_percentage: float = Field(ge=0, le=100)
+    face_centered_percentage: float = Field(ge=0, le=100)
+    head_stability: str = Field(description="'stable' or 'excessive'")
+    presentation_presence_score: int = Field(ge=0, le=100)
+    blink_count: int = Field(ge=0)
+    blinks_per_minute: int = Field(ge=0)
+    avg_pitch: float
+    avg_yaw: float
+    avg_roll: float
+    std_pitch: float
+    std_yaw: float
+    std_roll: float
+    warnings: list[str] = Field(default_factory=list)
+
+
+class CompletePresentationRequest(BaseModel):
+    """Request body for completing a presentation session."""
+
+    visual_metrics: Optional[VisualMetricsInput] = Field(
+        default=None,
+        description="Client-side face tracking metrics from MediaPipe analysis",
+    )
 
 
 # --- Response Schemas ---

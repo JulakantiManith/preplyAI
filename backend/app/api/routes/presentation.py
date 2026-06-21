@@ -13,6 +13,7 @@ from uuid import UUID
 from fastapi import APIRouter, File, HTTPException, UploadFile, status
 
 from app.api.schemas.presentation_schemas import (
+    CompletePresentationRequest,
     CompletePresentationResponse,
     CreatePresentationSessionRequest,
     CreatePresentationSessionResponse,
@@ -231,12 +232,16 @@ async def upload_materials(
 async def complete_presentation_session(
     session_id: UUID,
     current_user_id: CurrentUserDep,
+    request: CompletePresentationRequest = CompletePresentationRequest(),
 ):
     """Submit a presentation session for background analysis.
 
     Immediately marks the session as 'processing' and kicks off
     transcription, scoring, and feedback generation in the background.
     Returns instantly so the user is not blocked.
+
+    Optionally accepts visual_metrics (client-side face tracking data)
+    which are stored alongside the presentation scores.
 
     Use GET /{session_id}/status to poll for completion.
 
@@ -270,9 +275,14 @@ async def complete_presentation_session(
     except Exception as e:
         logger.error("Failed to mark session as processing: %s", str(e))
 
+    # Extract visual metrics dict if provided
+    visual_metrics_data = (
+        request.visual_metrics.model_dump() if request.visual_metrics else None
+    )
+
     # Fire off background evaluation task
     asyncio.create_task(
-        _run_evaluation_background(service, current_user_id, session_id)
+        _run_evaluation_background(service, current_user_id, session_id, visual_metrics_data)
     )
 
     return {
@@ -283,15 +293,35 @@ async def complete_presentation_session(
 
 
 async def _run_evaluation_background(
-    service: PresentationService, user_id: str, session_id: UUID
+    service: PresentationService, user_id: str, session_id: UUID,
+    visual_metrics: dict | None = None,
 ) -> None:
     """Run the full evaluation pipeline in the background.
 
     If it fails, marks the session as 'failed' so the user knows.
+    After evaluation, stores visual_metrics in presentation_scores if provided.
     """
     try:
         await service.complete_session(user_id=user_id, session_id=session_id)
         logger.info("Background evaluation completed for session %s", session_id)
+
+        # Store visual_metrics in the existing feedback record's presentation_scores
+        if visual_metrics:
+            try:
+                feedback = service._repository.get_session_feedback(session_id)
+                if feedback:
+                    pres_scores = feedback.get("presentation_scores") or {}
+                    pres_scores["visual_metrics"] = visual_metrics
+                    # Update the feedback record
+                    service._repository._client.table("session_feedback").update(
+                        {"presentation_scores": pres_scores}
+                    ).eq("session_id", str(session_id)).execute()
+                    logger.info("Stored visual_metrics for session %s", session_id)
+            except Exception as e:
+                logger.warning(
+                    "Failed to store visual_metrics for session %s: %s",
+                    session_id, str(e),
+                )
     except Exception as e:
         logger.error(
             "Background evaluation failed for session %s: %s", session_id, str(e)

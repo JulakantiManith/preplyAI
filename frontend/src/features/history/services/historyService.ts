@@ -56,6 +56,7 @@ interface SessionDetailApiResponse {
   status: string | null;
   created_at: string;
   completed_at: string | null;
+  recording_url: string | null;
   answers: AnswerDetailApi[];
   feedback: SessionFeedbackDetailApi | null;
 }
@@ -102,6 +103,23 @@ export interface SessionFeedbackDetail {
   presentationScores: unknown;
 }
 
+export interface VisualMetrics {
+  eyeContactPercentage: number;
+  faceVisibilityPercentage: number;
+  faceCenteredPercentage: number;
+  headStability: string;
+  presentationPresenceScore: number;
+  blinkCount: number;
+  blinksPerMinute: number;
+  avgPitch: number;
+  avgYaw: number;
+  avgRoll: number;
+  stdPitch: number;
+  stdYaw: number;
+  stdRoll: number;
+  warnings: string[];
+}
+
 export interface SessionDetail {
   id: string;
   sessionType: string;
@@ -116,8 +134,10 @@ export interface SessionDetail {
   status: string | null;
   createdAt: string;
   completedAt: string | null;
+  recordingUrl: string | null;
   answers: AnswerDetail[];
   feedback: SessionFeedbackDetail | null;
+  visualMetrics: VisualMetrics | null;
 }
 
 export interface HistoryFilters {
@@ -167,6 +187,31 @@ function mapAnswerDetail(answer: AnswerDetailApi): AnswerDetail {
 }
 
 function mapSessionDetail(data: SessionDetailApiResponse): SessionDetail {
+  // Extract visual_metrics from presentation_scores if available
+  let visualMetrics: VisualMetrics | null = null;
+  if (data.feedback?.presentation_scores) {
+    const presScores = data.feedback.presentation_scores as Record<string, unknown>;
+    const vm = presScores.visual_metrics as Record<string, unknown> | undefined;
+    if (vm) {
+      visualMetrics = {
+        eyeContactPercentage: (vm.eye_contact_percentage as number) ?? 0,
+        faceVisibilityPercentage: (vm.face_visibility_percentage as number) ?? 0,
+        faceCenteredPercentage: (vm.face_centered_percentage as number) ?? 0,
+        headStability: (vm.head_stability as string) ?? "stable",
+        presentationPresenceScore: (vm.presentation_presence_score as number) ?? 0,
+        blinkCount: (vm.blink_count as number) ?? 0,
+        blinksPerMinute: (vm.blinks_per_minute as number) ?? 0,
+        avgPitch: (vm.avg_pitch as number) ?? 0,
+        avgYaw: (vm.avg_yaw as number) ?? 0,
+        avgRoll: (vm.avg_roll as number) ?? 0,
+        stdPitch: (vm.std_pitch as number) ?? 0,
+        stdYaw: (vm.std_yaw as number) ?? 0,
+        stdRoll: (vm.std_roll as number) ?? 0,
+        warnings: (vm.warnings as string[]) ?? [],
+      };
+    }
+  }
+
   return {
     id: data.id,
     sessionType: data.session_type,
@@ -181,6 +226,7 @@ function mapSessionDetail(data: SessionDetailApiResponse): SessionDetail {
     status: data.status,
     createdAt: data.created_at,
     completedAt: data.completed_at,
+    recordingUrl: data.recording_url,
     answers: data.answers.map(mapAnswerDetail),
     feedback: data.feedback
       ? {
@@ -191,6 +237,7 @@ function mapSessionDetail(data: SessionDetailApiResponse): SessionDetail {
           presentationScores: data.feedback.presentation_scores,
         }
       : null,
+    visualMetrics,
   };
 }
 

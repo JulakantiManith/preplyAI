@@ -5,6 +5,7 @@ import {
   BarChart3,
 } from "lucide-react";
 import type { CompletePresentationResponse } from "../services/presentationService";
+import { VisualAnalysisMetrics } from "./VisualAnalysisMetrics";
 
 interface PresentationReportProps {
   report: CompletePresentationResponse;
@@ -47,7 +48,7 @@ function ScoreBar({ label, score }: ScoreBarProps) {
 }
 
 export function PresentationReport({ report }: PresentationReportProps) {
-  const { scores, feedback, session } = report;
+  const { scores, feedback, session, visual_analysis } = report;
 
   const overallScore = scores
     ? Math.round(
@@ -95,6 +96,11 @@ export function PresentationReport({ report }: PresentationReportProps) {
             <ScoreBar label="Engagement" score={scores.engagement} />
           </div>
         </div>
+      )}
+
+      {/* Visual Analysis Section */}
+      {visual_analysis && (
+        <VisualAnalysisMetrics visualAnalysis={visual_analysis} />
       )}
 
       {/* Feedback Sections */}

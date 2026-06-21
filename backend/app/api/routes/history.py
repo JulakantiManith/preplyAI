@@ -237,6 +237,40 @@ async def get_session_detail(
                 technical_evaluation=fb.get("technical_evaluation"),
                 presentation_scores=fb.get("presentation_scores"),
             )
+
+        # Resolve recording_url for presentation sessions
+        recording_url = None
+        if session.get("session_type") == "presentation":
+            try:
+                storage_prefix = f"presentations/{current_user_id}/{session_id}/"
+                files = client.storage.from_("recordings").list(storage_prefix)
+                for f in files:
+                    name = f.get("name", "") if isinstance(f, dict) else getattr(f, "name", "")
+                    if name.startswith("recording_"):
+                        file_path = f"{storage_prefix}{name}"
+                        # Use signed URL (1 hour expiry) for private buckets
+                        try:
+                            signed = client.storage.from_("recordings").create_signed_url(
+                                file_path, 3600
+                            )
+                            if isinstance(signed, dict) and signed.get("signedURL"):
+                                recording_url = signed["signedURL"]
+                            elif isinstance(signed, str):
+                                recording_url = signed
+                            else:
+                                # Fallback to public URL
+                                url = client.storage.from_("recordings").get_public_url(file_path)
+                                recording_url = url if isinstance(url, str) else str(url)
+                        except Exception:
+                            # If signed URL fails, try public URL
+                            url = client.storage.from_("recordings").get_public_url(file_path)
+                            recording_url = url if isinstance(url, str) else str(url)
+                        break
+            except Exception as e:
+                logger.warning(
+                    "Failed to resolve recording_url for session %s: %s",
+                    session_id, str(e),
+                )
         elif session.get("status") == "completed" and (answers_response.data or []):
             # No feedback persisted for this completed session — generate algorithmic feedback
             # without calling Gemini API to conserve API quota
@@ -374,6 +408,7 @@ async def get_session_detail(
             status=session.get("status"),
             created_at=session.get("created_at", ""),
             completed_at=session.get("completed_at"),
+            recording_url=recording_url,
             answers=answers,
             feedback=feedback,
         )

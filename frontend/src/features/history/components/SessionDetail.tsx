@@ -9,6 +9,8 @@ import {
   Award,
   AlertTriangle,
   Lightbulb,
+  Eye,
+  Video,
 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import type { SessionDetail as SessionDetailType } from "../services/historyService";
@@ -187,6 +189,74 @@ export function SessionDetail({ session }: SessionDetailProps) {
         )
       )}
 
+      {/* Recording Video Playback (Presentation sessions) */}
+      {session.sessionType === "presentation" && session.recordingUrl && (
+        <div className="space-y-3">
+          <h3 className="text-lg font-semibold flex items-center gap-2">
+            <Video className="h-5 w-5 text-muted-foreground" />
+            Recording
+          </h3>
+          <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
+            <video
+              src={session.recordingUrl}
+              controls
+              className="aspect-video w-full"
+              preload="metadata"
+            >
+              Your browser does not support the video element.
+            </video>
+          </div>
+        </div>
+      )}
+
+      {/* Presentation Presence / Visual Metrics */}
+      {session.sessionType === "presentation" && session.visualMetrics && (
+        <div className="space-y-3">
+          <h3 className="text-lg font-semibold flex items-center gap-2">
+            <Eye className="h-5 w-5 text-muted-foreground" />
+            Presentation Presence
+          </h3>
+          <div className="rounded-lg border bg-card p-5 shadow-sm space-y-4">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              <PresenceMetricCard
+                label="Presence Score"
+                value={`${session.visualMetrics.presentationPresenceScore}/100`}
+              />
+              <PresenceMetricCard
+                label="Eye Contact"
+                value={`${session.visualMetrics.eyeContactPercentage}%`}
+              />
+              <PresenceMetricCard
+                label="Face Visibility"
+                value={`${session.visualMetrics.faceVisibilityPercentage}%`}
+              />
+              <PresenceMetricCard
+                label="Head Stability"
+                value={session.visualMetrics.headStability === "stable" ? "Stable" : "Excessive"}
+              />
+              <PresenceMetricCard
+                label="Blinks"
+                value={`${session.visualMetrics.blinkCount} (${session.visualMetrics.blinksPerMinute}/min)`}
+              />
+              <PresenceMetricCard
+                label="Face Centering"
+                value={`${session.visualMetrics.faceCenteredPercentage}%`}
+              />
+            </div>
+            {session.visualMetrics.warnings.length > 0 && (
+              <div className="text-xs text-muted-foreground">
+                <p className="font-medium mb-1">Session notes:</p>
+                <ul className="space-y-0.5">
+                  {session.visualMetrics.warnings.map((w, i) => (
+                    <li key={i}>• {w}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* AI Feedback */}
       {session.feedback && (
         <div className="space-y-4">
@@ -327,6 +397,15 @@ export function SessionDetail({ session }: SessionDetailProps) {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function PresenceMetricCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md bg-muted/50 p-2.5 text-center">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="text-sm font-semibold text-foreground mt-0.5">{value}</p>
     </div>
   );
 }

@@ -100,6 +100,9 @@ class SessionDetailResponse(BaseModel):
     completed_at: Optional[str] = Field(
         default=None, description="Session completion timestamp"
     )
+    recording_url: Optional[str] = Field(
+        default=None, description="Public URL for the session recording (presentations)"
+    )
     answers: list[AnswerDetail] = Field(
         default_factory=list, description="Full transcript with all answer details"
     )

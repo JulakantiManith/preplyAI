@@ -7,11 +7,15 @@ import {
 } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import { useVideoRecorder } from "../hooks/useVideoRecorder";
+import { useMediaPipeFaceMesh } from "../hooks/useMediaPipeFaceMesh";
+import type { SessionMetrics } from "../hooks/useMediaPipeFaceMesh";
+import { EyeGazeOverlay } from "./EyeGazeOverlay";
+import { RecordingWarnings, useRecordingWarnings } from "./RecordingWarnings";
 
 interface PresentationRecorderProps {
   sessionId: string;
   durationSeconds: number;
-  onRecordingComplete: (blob: Blob, duration: number) => void;
+  onRecordingComplete: (blob: Blob, duration: number, metrics?: SessionMetrics) => void;
   onTimerExpired: () => void;
   onMaterialsSelected: (file: File) => void;
   isUploading: boolean;
@@ -28,6 +32,7 @@ export function PresentationRecorder({
   materialsUploaded: _materialsUploaded,
 }: PresentationRecorderProps) {
   const videoPreviewRef = useRef<HTMLVideoElement>(null);
+  const canvasOverlayRef = useRef<HTMLCanvasElement>(null);
 
   const {
     status,
@@ -40,22 +45,58 @@ export function PresentationRecorder({
     getStream,
   } = useVideoRecorder();
 
+  const {
+    warnings: recordingWarnings,
+    addWarning,
+    dismissWarning,
+    removeByType,
+  } = useRecordingWarnings();
+
+  // MediaPipe Face Mesh — real face detection with landmarks
+  const { faceStatus, currentWarnings, getSessionMetrics } = useMediaPipeFaceMesh({
+    videoRef: videoPreviewRef,
+    canvasRef: canvasOverlayRef,
+    isActive: status === "recording",
+  });
+
+  // Sync MediaPipe warnings to the RecordingWarnings component
+  useEffect(() => {
+    if (status !== "recording") return;
+
+    // Face detection warnings
+    if (faceStatus === "not-detected") {
+      addWarning("face-not-detected", "Face not detected. Please ensure your face is visible.");
+    } else {
+      removeByType("face-not-detected");
+    }
+
+    // Position/lighting warnings from MediaPipe
+    const hasLightingWarning = currentWarnings.some((w) => w.includes("lighting"));
+    if (hasLightingWarning) {
+      addWarning("low-lighting", "Low lighting — improve lighting for better tracking.");
+    } else {
+      removeByType("low-lighting");
+    }
+  }, [faceStatus, currentWarnings, status, addWarning, removeByType]);
+
   // Connect live stream to video element for preview
   useEffect(() => {
     if (status === "recording" && videoPreviewRef.current) {
       const stream = getStream();
       if (stream) {
         videoPreviewRef.current.srcObject = stream;
+        videoPreviewRef.current.play().catch(() => {});
       }
     }
   }, [status, getStream]);
 
-  // Notify parent when recording completes
+  // Notify parent when recording completes (include session metrics)
   useEffect(() => {
     if (status === "stopped" && videoBlob) {
-      onRecordingComplete(videoBlob, duration);
+      const metrics = getSessionMetrics();
+      onRecordingComplete(videoBlob, duration, metrics);
     }
-  }, [status, videoBlob, duration, onRecordingComplete]);
+  }, [status, videoBlob, duration, onRecordingComplete, getSessionMetrics]);
 
   // Auto-stop recording when user-chosen duration expires
   useEffect(() => {
@@ -93,14 +134,22 @@ export function PresentationRecorder({
       {/* Video Preview Area */}
       <div className="relative overflow-hidden rounded-lg border border-border bg-black aspect-video">
         {status === "recording" && (
-          <video
-            ref={videoPreviewRef}
-            autoPlay
-            muted
-            playsInline
-            className="h-full w-full object-cover"
-            aria-label="Live camera preview"
-          />
+          <>
+            <video
+              ref={videoPreviewRef}
+              autoPlay
+              muted
+              playsInline
+              className="h-full w-full object-cover"
+              aria-label="Live camera preview"
+            />
+            {/* Canvas overlay for face detection outline */}
+            <canvas
+              ref={canvasOverlayRef}
+              className="absolute inset-0 h-full w-full pointer-events-none"
+              aria-hidden="true"
+            />
+          </>
         )}
 
         {status === "stopped" && previewUrl && (
@@ -147,6 +196,12 @@ export function PresentationRecorder({
                 </span>
               </div>
             )}
+
+            {/* Eye Gaze Overlay */}
+            <EyeGazeOverlay faceStatus={faceStatus} />
+
+            {/* Recording Warnings (lighting/face detection) */}
+            <RecordingWarnings warnings={recordingWarnings} onDismiss={dismissWarning} />
           </>
         )}
       </div>

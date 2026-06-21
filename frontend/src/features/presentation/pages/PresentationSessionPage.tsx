@@ -15,6 +15,7 @@ import {
   uploadMaterials,
   completePresentationSession,
 } from "../services/presentationService";
+import type { VisualMetricsInput } from "../services/presentationService";
 
 const ACCEPTED_MATERIAL_TYPES = [
   "application/pdf",
@@ -42,7 +43,24 @@ export function PresentationSessionPage() {
   const [recordingBlob, setRecordingBlob] = useState<Blob | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isCompleting, setIsCompleting] = useState(false);
+  const [sessionMetrics, setSessionMetrics] = useState<import("../hooks/useMediaPipeFaceMesh").SessionMetrics | null>(null);
   const autoFinishRef = useRef(false);
+
+  // Warn user before leaving page during active recording
+  useEffect(() => {
+    if (phase !== "recording") return;
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      // Modern browsers show a generic message; custom text is ignored but required for some
+      e.returnValue =
+        "Your presentation recording is currently in progress. Refreshing or leaving this page will stop the recording and unsaved progress may be lost.";
+      return e.returnValue;
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [phase]);
 
   const handleMaterialsChange = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -81,8 +99,11 @@ export function PresentationSessionPage() {
   };
 
   const handleRecordingComplete = useCallback(
-    (blob: Blob, _duration: number) => {
+    (blob: Blob, _duration: number, metrics?: import("../hooks/useMediaPipeFaceMesh").SessionMetrics) => {
       setRecordingBlob(blob);
+      if (metrics) {
+        setSessionMetrics(metrics);
+      }
     },
     []
   );
@@ -111,8 +132,29 @@ export function PresentationSessionPage() {
       // Upload recording
       await uploadRecording(sessionId, recordingBlob);
 
+      // Build visual metrics payload from session metrics (aggregate only)
+      let visualMetrics: VisualMetricsInput | undefined;
+      if (sessionMetrics) {
+        visualMetrics = {
+          eye_contact_percentage: sessionMetrics.eyeContactPercentage,
+          face_visibility_percentage: sessionMetrics.faceVisibilityPercentage,
+          face_centered_percentage: sessionMetrics.faceCenteredPercentage,
+          head_stability: sessionMetrics.headStability,
+          presentation_presence_score: sessionMetrics.presentationPresenceScore,
+          blink_count: sessionMetrics.blinkCount,
+          blinks_per_minute: sessionMetrics.blinksPerMinute,
+          avg_pitch: sessionMetrics.avgPitch,
+          avg_yaw: sessionMetrics.avgYaw,
+          avg_roll: sessionMetrics.avgRoll,
+          std_pitch: sessionMetrics.stdPitch,
+          std_yaw: sessionMetrics.stdYaw,
+          std_roll: sessionMetrics.stdRoll,
+          warnings: sessionMetrics.warnings,
+        };
+      }
+
       // Submit for background processing (returns immediately)
-      await completePresentationSession(sessionId);
+      await completePresentationSession(sessionId, visualMetrics);
 
       // Show success
       setPhase("submitted");
@@ -244,11 +286,11 @@ export function PresentationSessionPage() {
     );
   }
 
-  // Phase: Submitted — success screen
+  // Phase: Submitted — success screen with face tracking metrics
   if (phase === "submitted") {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
-        <div className="mx-auto max-w-md text-center space-y-6">
+        <div className="mx-auto max-w-lg text-center space-y-6">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
             <PartyPopper className="h-8 w-8 text-green-600 dark:text-green-400" />
           </div>
@@ -257,10 +299,36 @@ export function PresentationSessionPage() {
             <p className="text-muted-foreground">
               Your results are currently being generated. This usually takes 1-2 minutes.
             </p>
-            <p className="text-sm text-muted-foreground">
-              You can start another session or check the History page later to view the completed results.
-            </p>
           </div>
+
+          {/* Face Tracking Metrics Summary */}
+          {sessionMetrics && (
+            <div className="rounded-lg border border-border p-5 text-left space-y-4">
+              <h3 className="text-sm font-semibold text-foreground text-center">Presentation Presence</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <MetricCard label="Presence Score" value={`${sessionMetrics.presentationPresenceScore}/100`} />
+                <MetricCard label="Eye Contact" value={`${sessionMetrics.eyeContactPercentage}%`} />
+                <MetricCard label="Face Visibility" value={`${sessionMetrics.faceVisibilityPercentage}%`} />
+                <MetricCard label="Head Stability" value={sessionMetrics.headStability === "stable" ? "Stable" : "Excessive"} />
+                <MetricCard label="Blinks" value={`${sessionMetrics.blinkCount} (${sessionMetrics.blinksPerMinute}/min)`} />
+                <MetricCard label="Face Centering" value={`${sessionMetrics.faceCenteredPercentage}%`} />
+              </div>
+              {sessionMetrics.warnings.length > 0 && (
+                <div className="text-xs text-muted-foreground">
+                  <p className="font-medium mb-1">Session notes:</p>
+                  <ul className="space-y-0.5">
+                    {sessionMetrics.warnings.map((w, i) => (
+                      <li key={i}>• {w}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+
+          <p className="text-sm text-muted-foreground">
+            Check the History page later to view the full AI-generated feedback.
+          </p>
           <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
             <Button onClick={() => navigate("/presentation")}>
               New Presentation
@@ -312,6 +380,16 @@ export function PresentationSessionPage() {
           </Button>
         </div>
       )}
+    </div>
+  );
+}
+
+// Small helper component for the metrics summary grid
+function MetricCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md bg-muted/50 p-2.5 text-center">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="text-sm font-semibold text-foreground mt-0.5">{value}</p>
     </div>
   );
 }

@@ -62,6 +62,7 @@ export interface CompletePresentationResponse {
   session: PresentationSession;
   scores: PresentationScoresResponse | null;
   feedback: PresentationFeedbackResponse | null;
+  visual_analysis?: VisualAnalysisResponse | null;
 }
 
 export interface SubmitPresentationResponse {
@@ -70,12 +71,39 @@ export interface SubmitPresentationResponse {
   message: string;
 }
 
+// --- Visual Analysis Types ---
+
+export interface EyeContactResponse {
+  total_frames: number;
+  camera_frames: number;
+  eye_contact_percentage: number;
+  frame_classifications: ("camera" | "away")[];
+}
+
+export interface HeadPoseResponse {
+  measurements: { pitch: number; yaw: number; roll: number }[];
+  avg_pitch: number;
+  avg_yaw: number;
+  avg_roll: number;
+  std_pitch: number;
+  std_yaw: number;
+  std_roll: number;
+  stability: "stable" | "excessive";
+}
+
+export interface VisualAnalysisResponse {
+  eye_contact: EyeContactResponse;
+  head_pose: HeadPoseResponse;
+  warnings: string[];
+}
+
 export interface PresentationStatusResponse {
   session_id: string;
   status: string;
   session: PresentationSession;
   scores?: PresentationScoresResponse | null;
   feedback?: PresentationFeedbackResponse | null;
+  visual_analysis?: VisualAnalysisResponse | null;
 }
 
 // --- API Functions ---
@@ -121,15 +149,38 @@ export async function uploadMaterials(
   return response.data;
 }
 
+// --- Visual Metrics Input for session completion ---
+
+export interface VisualMetricsInput {
+  eye_contact_percentage: number;
+  face_visibility_percentage: number;
+  face_centered_percentage: number;
+  head_stability: string;
+  presentation_presence_score: number;
+  blink_count: number;
+  blinks_per_minute: number;
+  avg_pitch: number;
+  avg_yaw: number;
+  avg_roll: number;
+  std_pitch: number;
+  std_yaw: number;
+  std_roll: number;
+  warnings: string[];
+}
+
 /**
  * Submit presentation for background analysis.
+ * Optionally includes client-side face tracking metrics.
  * Returns immediately with status "processing".
  */
 export async function completePresentationSession(
-  sessionId: string
+  sessionId: string,
+  visualMetrics?: VisualMetricsInput
 ): Promise<SubmitPresentationResponse> {
+  const body = visualMetrics ? { visual_metrics: visualMetrics } : {};
   const response = await apiClient.post<SubmitPresentationResponse>(
-    `/sessions/presentation/${sessionId}/complete`
+    `/sessions/presentation/${sessionId}/complete`,
+    body
   );
   return response.data;
 }
