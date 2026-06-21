@@ -5,6 +5,28 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>%VITE_APP_NAME%</title>
+    <!-- Theme initialization: prevents FOUC by applying saved theme before first paint -->
+    <script>
+      (function () {
+        var STORAGE_KEY = "theme-preference";
+        var theme = "system";
+        try {
+          var stored = localStorage.getItem(STORAGE_KEY);
+          if (stored === "light" || stored === "dark" || stored === "system") {
+            theme = stored;
+          }
+        } catch (e) {
+          // localStorage unavailable — fall back to system
+        }
+        var resolved =
+          theme === "system"
+            ? window.matchMedia("(prefers-color-scheme: dark)").matches
+              ? "dark"
+              : "light"
+            : theme;
+        document.documentElement.classList.add(resolved);
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

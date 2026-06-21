@@ -371,14 +371,14 @@ This implementation plan follows a phased approach: Phase 1 (MVP) establishes th
     - **Validates: Requirements 13.2, 13.4**
 
 - [ ] 16. Data persistence, theme, and security hardening
-  - [ ] 16.1 Implement data isolation and persistence guarantees
+  - [x] 16.1 Implement data isolation and persistence guarantees
     - Ensure all repository queries filter by authenticated `user_id`
     - Implement database write retry logic (retry once on failure, display error if retry fails)
     - Ensure session data (transcript, scores, feedback, duration, date) persisted on completion
     - Verify Supabase Storage access restricted to owning user via RLS policies
     - _Requirements: 16.1, 16.2, 16.3, 16.4_
 
-  - [ ] 16.3 Implement theme flash prevention (FOUC)
+  - [x] 16.3 Implement theme flash prevention (FOUC)
     - Add an inline blocking `<script>` in `frontend/index.html` (inside `<head>`, before any module scripts) that reads the saved theme from `localStorage` key `theme-preference`, resolves `"system"` via `window.matchMedia("(prefers-color-scheme: dark)")`, and applies the `"dark"` or `"light"` class to `document.documentElement` synchronously
     - The inline script must use the same `localStorage` key (`theme-preference`) and resolution logic as `ThemeContext.tsx` to ensure consistency
     - If `localStorage` is unavailable or the stored value is invalid, fall back to the OS preferred color scheme

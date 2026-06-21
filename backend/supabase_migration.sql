@@ -372,6 +372,47 @@ CREATE POLICY "Users can delete own resumes"
 -- can perform all operations without RLS restrictions. No additional policies
 -- are needed for server-side access.
 
+-- --------------------------------------------------------------------------
+-- SESSION_QUESTIONS — Generated questions stored per session
+-- --------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS session_questions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  session_id UUID NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+  question_index INTEGER NOT NULL CHECK (question_index >= 0),
+  question_text TEXT NOT NULL,
+  topic TEXT,
+  difficulty TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+  CONSTRAINT session_questions_session_index_unique UNIQUE (session_id, question_index)
+);
+
+-- Enable RLS on session_questions
+ALTER TABLE session_questions ENABLE ROW LEVEL SECURITY;
+
+-- SESSION_QUESTIONS policies (access through session ownership)
+DROP POLICY IF EXISTS "Users can view own session questions" ON session_questions;
+CREATE POLICY "Users can view own session questions"
+  ON session_questions FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM sessions
+      WHERE sessions.id = session_questions.session_id
+      AND sessions.user_id = auth.uid()
+    )
+  );
+
+DROP POLICY IF EXISTS "Users can create questions for own sessions" ON session_questions;
+CREATE POLICY "Users can create questions for own sessions"
+  ON session_questions FOR INSERT
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM sessions
+      WHERE sessions.id = session_questions.session_id
+      AND sessions.user_id = auth.uid()
+    )
+  );
+
 -- ============================================================================
 -- 8. INDEXES
 -- ============================================================================
@@ -392,6 +433,10 @@ CREATE INDEX IF NOT EXISTS idx_answers_session_id_question_index ON answers(sess
 
 -- Session Feedback
 CREATE INDEX IF NOT EXISTS idx_session_feedback_session_id ON session_feedback(session_id);
+
+-- Session Questions
+CREATE INDEX IF NOT EXISTS idx_session_questions_session_id ON session_questions(session_id);
+CREATE INDEX IF NOT EXISTS idx_session_questions_session_id_index ON session_questions(session_id, question_index);
 
 -- Resumes
 CREATE INDEX IF NOT EXISTS idx_resumes_user_id ON resumes(user_id);

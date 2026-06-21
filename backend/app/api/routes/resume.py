@@ -3,10 +3,11 @@
 Provides endpoints for parsing resumes, viewing/editing extracted data,
 and confirming extracted data before question generation.
 
-Requirements: 6.1, 6.2, 6.3, 6.4
+Requirements: 6.1, 6.2, 6.3, 6.4, 16.3, 16.4
 """
 
 import logging
+from typing import Any, Optional
 
 from fastapi import APIRouter, HTTPException, status
 
@@ -23,6 +24,57 @@ from app.services.resume_parser import ResumeParserError, get_resume_parser
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/resume", tags=["Resume"])
+
+# Retry configuration for write operations - Requirement 16.3
+WRITE_MAX_RETRIES = 1
+
+
+def _retry_write(operation_name: str, operation_fn: Any) -> Any:
+    """Execute a write operation with retry-once logic.
+
+    Per Requirement 16.3: retry the operation once on failure,
+    display error if retry also fails.
+
+    Args:
+        operation_name: Descriptive name for logging.
+        operation_fn: Callable that performs the write operation.
+
+    Returns:
+        Result of the operation.
+
+    Raises:
+        HTTPException: If the operation fails after retry.
+    """
+    last_error: Optional[Exception] = None
+
+    for attempt in range(WRITE_MAX_RETRIES + 1):
+        try:
+            result = operation_fn()
+            return result
+        except HTTPException:
+            raise
+        except Exception as e:
+            last_error = e
+            if attempt < WRITE_MAX_RETRIES:
+                logger.warning(
+                    "Database write failed for '%s' (attempt %d/%d), retrying: %s",
+                    operation_name,
+                    attempt + 1,
+                    WRITE_MAX_RETRIES + 1,
+                    str(e),
+                )
+            else:
+                logger.error(
+                    "Database write failed for '%s' after %d attempts: %s",
+                    operation_name,
+                    WRITE_MAX_RETRIES + 1,
+                    str(e),
+                )
+
+    raise HTTPException(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        detail=f"Failed to {operation_name} after retrying. Please try again later.",
+    )
 
 
 @router.post(
@@ -182,22 +234,20 @@ async def edit_extracted_data(
             if value is not None:
                 current_data[field] = value
 
-        # Update in database
-        response = (
-            client.table("resumes")
-            .update({"extracted_data": current_data})
-            .eq("id", resume_id)
-            .eq("user_id", current_user_id)
-            .execute()
-        )
-
-        if not response.data:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to update extracted data",
+        # Update in database with retry (Requirement 16.3)
+        def _do_update():
+            resp = (
+                client.table("resumes")
+                .update({"extracted_data": current_data})
+                .eq("id", resume_id)
+                .eq("user_id", current_user_id)
+                .execute()
             )
+            if not resp.data:
+                raise Exception("No data returned from extracted data update")
+            return resp.data[0]
 
-        updated = response.data[0]
+        updated = _retry_write("update extracted data", _do_update)
 
         return ResumeExtractedResponse(
             id=updated["id"],
@@ -280,20 +330,20 @@ async def confirm_extracted_data(
                 detail="No extracted data available to confirm",
             )
 
-        # Mark as confirmed
-        response = (
-            client.table("resumes")
-            .update({"user_confirmed": True})
-            .eq("id", resume_id)
-            .eq("user_id", current_user_id)
-            .execute()
-        )
-
-        if not response.data:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to confirm resume data",
+        # Mark as confirmed with retry (Requirement 16.3)
+        def _do_confirm():
+            resp = (
+                client.table("resumes")
+                .update({"user_confirmed": True})
+                .eq("id", resume_id)
+                .eq("user_id", current_user_id)
+                .execute()
             )
+            if not resp.data:
+                raise Exception("No data returned from confirm update")
+            return resp.data[0]
+
+        _retry_write("confirm resume data", _do_confirm)
 
         return ResumeConfirmResponse(
             id=resume_id,
