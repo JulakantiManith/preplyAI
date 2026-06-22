@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import {
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  Area,
+  AreaChart,
 } from "recharts";
 import type { WeeklyProgress, TimeRange } from "../services/dashboardService";
 
@@ -124,15 +124,26 @@ export function WeeklyChart({ data, timeRange, onTimeRangeChange }: WeeklyChartP
       </div>
 
       {data.length === 0 ? (
-        <div className="mt-4 flex h-48 items-center justify-center">
-          <p className="text-sm text-muted-foreground">
+        <div className="mt-4 flex flex-col items-center justify-center rounded-md border border-dashed bg-card/50 py-8 text-center">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+            <svg className="h-5 w-5 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+            </svg>
+          </div>
+          <p className="mt-3 text-sm text-muted-foreground">
             No data for this period yet. Complete a session to see your progress.
           </p>
         </div>
       ) : (
         <div className="mt-4 h-64 w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+            <AreaChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+              <defs>
+                <linearGradient id="weeklyGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor={colors.line} stopOpacity={0.3} />
+                  <stop offset="95%" stopColor={colors.line} stopOpacity={0} />
+                </linearGradient>
+              </defs>
               <CartesianGrid strokeDasharray="3 3" stroke={colors.grid} />
               <XAxis
                 dataKey="label"
@@ -151,19 +162,23 @@ export function WeeklyChart({ data, timeRange, onTimeRangeChange }: WeeklyChartP
                   border: `1px solid ${colors.grid}`,
                   backgroundColor: colors.cardBg,
                   color: colors.cardFg,
+                  boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
                 }}
-                labelStyle={{ fontWeight: 600, color: colors.cardFg }}
+                labelStyle={{ fontWeight: 600, color: colors.cardFg, marginBottom: "4px" }}
                 formatter={(value: number) => [`${Math.round(value)}%`, "Avg Score"]}
               />
-              <Line
+              <Area
                 type="monotone"
                 dataKey="averageScore"
                 stroke={colors.line}
-                strokeWidth={2}
-                dot={{ r: 4, fill: colors.line }}
-                activeDot={{ r: 6, fill: colors.line }}
+                strokeWidth={2.5}
+                fill="url(#weeklyGradient)"
+                dot={{ r: 4, fill: colors.line, strokeWidth: 2, stroke: colors.cardBg }}
+                activeDot={{ r: 6, fill: colors.line, strokeWidth: 2, stroke: colors.cardBg }}
+                animationDuration={1000}
+                animationEasing="ease-in-out"
               />
-            </LineChart>
+            </AreaChart>
           </ResponsiveContainer>
         </div>
       )}

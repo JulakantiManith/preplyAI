@@ -4,8 +4,12 @@ import { MetricsCards } from "../components/MetricsCards";
 import { WeeklyChart } from "../components/WeeklyChart";
 import { RecentSessions } from "../components/RecentSessions";
 import { OnboardingState } from "../components/OnboardingState";
-import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
 import { ErrorMessage } from "@/shared/components/ErrorMessage";
+import {
+  MetricsCardsSkeleton,
+  ChartSkeleton,
+  ListSkeleton,
+} from "@/shared/components/skeletons";
 import type { TimeRange } from "../services/dashboardService";
 
 export function DashboardPage() {
@@ -14,8 +18,13 @@ export function DashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <LoadingSpinner label="Loading dashboard..." />
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <MetricsCardsSkeleton />
+        <div className="grid gap-6 lg:grid-cols-2">
+          <ChartSkeleton />
+          <ListSkeleton rows={4} className="rounded-lg border bg-card p-6 shadow-sm" />
+        </div>
       </div>
     );
   }
@@ -60,4 +69,5 @@ export function DashboardPage() {
       </div>
     </div>
   );
+
 }

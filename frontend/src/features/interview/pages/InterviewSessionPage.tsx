@@ -86,7 +86,7 @@ export function InterviewSessionPage() {
   // If we have a session ID in URL but no session state, show start-from-setup message
   if (!interview.sessionId && !interview.isLoading) {
     return (
-      <div className="flex min-h-[400px] items-center justify-center">
+      <div className="flex min-h-[400px] items-center justify-center animate-in fade-in duration-300">
         <div className="space-y-4 text-center">
           <AlertCircle className="mx-auto h-12 w-12 text-muted-foreground" />
           <h2 className="text-xl font-semibold">Session Not Found</h2>
@@ -117,7 +117,7 @@ export function InterviewSessionPage() {
   // Loading state
   if (interview.isLoading && interview.phase === "setup") {
     return (
-      <div className="flex min-h-[400px] items-center justify-center">
+      <div className="flex min-h-[400px] items-center justify-center animate-in fade-in duration-300">
         <LoadingSpinner label="Creating session..." />
       </div>
     );
@@ -130,7 +130,7 @@ export function InterviewSessionPage() {
         title="Session Error"
         message={interview.error}
         retry={() => interview.clearError()}
-        className="mx-auto max-w-lg mt-8"
+        className="mx-auto max-w-lg mt-8 animate-in fade-in duration-300"
       />
     );
   }
@@ -141,7 +141,7 @@ export function InterviewSessionPage() {
     (interview.sessionReport || interview.technicalEvaluation)
   ) {
     return (
-      <div className="mx-auto max-w-2xl py-6">
+      <div className="mx-auto max-w-2xl py-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
         <SessionReport
           sessionReport={interview.sessionReport}
           technicalEvaluation={interview.technicalEvaluation}
@@ -157,7 +157,7 @@ export function InterviewSessionPage() {
       {/* Fallback notification */}
       {interview.fallbackUsed && (
         <div
-          className="flex items-start gap-2 rounded-md border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800"
+          className="flex items-start gap-2 rounded-lg border border-yellow-200 bg-yellow-50 dark:bg-yellow-900/20 dark:border-yellow-800 p-3 text-sm text-yellow-800 dark:text-yellow-300 animate-in fade-in slide-in-from-top-2 duration-300"
           role="status"
         >
           <Info className="mt-0.5 h-4 w-4 shrink-0" />
@@ -170,7 +170,7 @@ export function InterviewSessionPage() {
       {/* Error banner */}
       {interview.error && (
         <div
-          className="flex items-start gap-2 rounded-md bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive"
+          className="flex items-start gap-2 rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive animate-in fade-in slide-in-from-top-2 duration-200"
           role="alert"
         >
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
@@ -180,7 +180,7 @@ export function InterviewSessionPage() {
 
       {/* In progress - show question and recorder */}
       {interview.phase === "in_progress" && currentQuestion && (
-        <div className="space-y-6">
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-400">
           <QuestionDisplay
             questionText={currentQuestion.text}
             questionIndex={interview.currentQuestionIndex}
@@ -189,8 +189,8 @@ export function InterviewSessionPage() {
 
           {/* If already answered, show answer info and skip button */}
           {isCurrentQuestionAnswered ? (
-            <div className="space-y-4">
-              <div className="rounded-md border border-green-200 bg-green-50 dark:bg-green-900/20 dark:border-green-800 p-4 text-sm text-green-800 dark:text-green-300">
+            <div className="space-y-4 animate-in fade-in duration-300">
+              <div className="rounded-lg border border-green-200 bg-green-50 dark:bg-green-900/20 dark:border-green-800 p-4 text-sm text-green-800 dark:text-green-300">
                 <p className="font-medium">Already answered</p>
                 <p className="mt-1 text-green-700 dark:text-green-400">
                   {currentQuestionAnswer.response &&
@@ -200,17 +200,17 @@ export function InterviewSessionPage() {
                 </p>
               </div>
               {isLastQuestion ? (
-                <Button onClick={handleCompleteSession} className="w-full">
+                <Button onClick={handleCompleteSession} className="w-full h-11 text-base font-medium transition-transform duration-200 hover:scale-[1.01]">
                   Complete Session
                 </Button>
               ) : (
-                <Button onClick={handleNextQuestion} className="w-full">
+                <Button onClick={handleNextQuestion} className="w-full h-11 text-base font-medium transition-transform duration-200 hover:scale-[1.01]">
                   Next Question
                 </Button>
               )}
             </div>
           ) : (
-            <>
+            <div className="animate-in fade-in duration-300">
               <AudioRecorder
                 status={recorder.status}
                 duration={recorder.duration}
@@ -222,32 +222,34 @@ export function InterviewSessionPage() {
 
               {/* Show submitting state after recording stops */}
               {recorder.status === "stopped" && interview.isLoading && (
-                <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mt-4 animate-in fade-in duration-200">
                   <LoadingSpinner size="sm" label="" />
-                  <span>Submitting your answer...</span>
+                  <span>Analyzing your answer...</span>
                 </div>
               )}
-            </>
+            </div>
           )}
         </div>
       )}
 
       {/* Reviewing - show feedback */}
       {interview.phase === "reviewing" && lastAnswer && (
-        <AnswerFeedback
-          answerResult={lastAnswer}
-          isTechnical={interview.isTechnical}
-          isLastQuestion={isLastQuestion}
-          onNext={handleNextQuestion}
-          onComplete={handleCompleteSession}
-        />
+        <div className="animate-in fade-in slide-in-from-bottom-3 duration-400">
+          <AnswerFeedback
+            answerResult={lastAnswer}
+            isTechnical={interview.isTechnical}
+            isLastQuestion={isLastQuestion}
+            onNext={handleNextQuestion}
+            onComplete={handleCompleteSession}
+          />
+        </div>
       )}
 
       {/* Completed but waiting for report */}
       {interview.phase === "completed" &&
         !interview.sessionReport &&
         !interview.technicalEvaluation && (
-          <div className="space-y-4">
+          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-3 duration-400">
             {interview.isLoading ? (
               <div className="flex flex-col items-center justify-center space-y-4 py-12">
                 <LoadingSpinner label="" />
@@ -261,12 +263,12 @@ export function InterviewSessionPage() {
                 </div>
               </div>
             ) : (
-              <div className="text-center space-y-4">
+              <div className="text-center space-y-4 py-6">
                 <h2 className="text-xl font-semibold">All Questions Answered!</h2>
                 <p className="text-sm text-muted-foreground">
                   Complete the session to get your performance report.
                 </p>
-                <Button onClick={handleCompleteSession} className="w-full">
+                <Button onClick={handleCompleteSession} className="w-full h-11 text-base font-medium transition-transform duration-200 hover:scale-[1.01]">
                   Get Session Report
                 </Button>
               </div>

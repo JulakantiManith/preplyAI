@@ -3,8 +3,8 @@ import { ArrowLeft } from "lucide-react";
 import { useSessionDetail } from "../hooks/useSessionHistory";
 import { SessionDetail } from "../components/SessionDetail";
 import { Button } from "@/shared/components/ui/button";
-import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
 import { ErrorMessage } from "@/shared/components/ErrorMessage";
+import { Skeleton } from "@/shared/components/ui/skeleton";
 
 export function SessionDetailPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -36,8 +36,22 @@ export function SessionDetailPage() {
       </div>
 
       {isLoading && (
-        <div className="flex h-64 items-center justify-center">
-          <LoadingSpinner label="Loading session details..." />
+        <div className="space-y-4">
+          <div className="rounded-lg border bg-card p-6 shadow-sm space-y-3">
+            <Skeleton className="h-6 w-48" />
+            <Skeleton className="h-4 w-32" />
+            <div className="grid gap-4 sm:grid-cols-3 mt-4">
+              <Skeleton className="h-20 rounded-lg" />
+              <Skeleton className="h-20 rounded-lg" />
+              <Skeleton className="h-20 rounded-lg" />
+            </div>
+          </div>
+          <div className="rounded-lg border bg-card p-6 shadow-sm space-y-3">
+            <Skeleton className="h-5 w-36" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-3/4" />
+          </div>
         </div>
       )}
 

@@ -9,10 +9,24 @@ export function Hero() {
   const appName = import.meta.env.VITE_APP_NAME || "AI Interview & Presentation Coach";
 
   return (
-    <section className="relative overflow-hidden bg-background">
+    <section className="relative overflow-hidden bg-background hero-gradient">
+      {/* Decorative blurred shapes */}
+      <div
+        className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 h-[480px] w-[720px] rounded-full bg-primary/5 blur-3xl"
+        aria-hidden="true"
+      />
+      <div
+        className="pointer-events-none absolute top-32 right-0 h-64 w-64 rounded-full bg-secondary/40 blur-2xl"
+        aria-hidden="true"
+      />
+      <div
+        className="pointer-events-none absolute bottom-0 left-0 h-48 w-48 rounded-full bg-primary/3 blur-2xl"
+        aria-hidden="true"
+      />
+
       {/* Landing Navigation */}
       <nav
-        className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8"
+        className="relative mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8"
         aria-label="Landing page navigation"
       >
         <div className="flex items-center gap-2">
@@ -44,9 +58,9 @@ export function Hero() {
       </nav>
 
       {/* Hero Content */}
-      <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 sm:py-28 lg:px-8 lg:py-36">
+      <div className="relative mx-auto max-w-7xl px-4 py-20 sm:px-6 sm:py-28 lg:px-8 lg:py-36">
         <div className="flex flex-col items-center text-center">
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border bg-secondary px-4 py-1.5 text-sm text-secondary-foreground">
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border bg-secondary/80 backdrop-blur-sm px-4 py-1.5 text-sm text-secondary-foreground shadow-sm">
             <Sparkles className="h-4 w-4" />
             <span>AI-Powered Interview &amp; Presentation Coach</span>
           </div>
@@ -61,15 +75,15 @@ export function Hero() {
           </p>
           <div className="mt-10 flex flex-col gap-4 sm:flex-row">
             {isAuthenticated ? (
-              <Button size="lg" asChild>
+              <Button size="lg" className="shadow-md" asChild>
                 <Link to="/dashboard">Go to Dashboard</Link>
               </Button>
             ) : (
               <>
-                <Button size="lg" asChild>
+                <Button size="lg" className="shadow-md" asChild>
                   <Link to="/register">Get Started Free</Link>
                 </Button>
-                <Button variant="outline" size="lg" asChild>
+                <Button variant="outline" size="lg" className="shadow-sm" asChild>
                   <Link to="/login">Sign In</Link>
                 </Button>
               </>

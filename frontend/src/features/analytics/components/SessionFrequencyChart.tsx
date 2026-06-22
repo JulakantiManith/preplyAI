@@ -106,6 +106,12 @@ export function SessionFrequencyChart({ dataPoints }: SessionFrequencyChartProps
         <div className="mt-4 h-72 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+              <defs>
+                <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor={colors.bar} stopOpacity={0.9} />
+                  <stop offset="95%" stopColor={colors.bar} stopOpacity={0.6} />
+                </linearGradient>
+              </defs>
               <CartesianGrid strokeDasharray="3 3" stroke={colors.grid} />
               <XAxis
                 dataKey="label"
@@ -124,15 +130,22 @@ export function SessionFrequencyChart({ dataPoints }: SessionFrequencyChartProps
                   border: `1px solid ${colors.grid}`,
                   backgroundColor: colors.cardBg,
                   color: colors.cardFg,
+                  boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
                 }}
-                labelStyle={{ fontWeight: 600, color: colors.cardFg }}
-                formatter={(value: number) => [`${value}`, "Sessions"]}
+                labelStyle={{ fontWeight: 600, color: colors.cardFg, marginBottom: "4px" }}
+                formatter={(value: number, name: string) => {
+                  if (name === "sessionCount") return [`${value}`, "Sessions"];
+                  return [`${value}`, name];
+                }}
+                cursor={{ fill: colors.bar, opacity: 0.1 }}
               />
               <Bar
                 dataKey="sessionCount"
-                fill={colors.bar}
+                fill="url(#barGradient)"
                 radius={[4, 4, 0, 0]}
                 maxBarSize={48}
+                animationDuration={1000}
+                animationEasing="ease-in-out"
               />
             </BarChart>
           </ResponsiveContainer>

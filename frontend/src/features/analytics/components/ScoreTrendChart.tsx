@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import {
-  LineChart,
-  Line,
+  Area,
+  AreaChart,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -131,7 +131,21 @@ export function ScoreTrendChart({
       ) : (
         <div className="mt-4 h-72 w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+            <AreaChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+              <defs>
+                <linearGradient id="overallGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor={colors.overall} stopOpacity={0.25} />
+                  <stop offset="95%" stopColor={colors.overall} stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="confidenceGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor={colors.confidence} stopOpacity={0.25} />
+                  <stop offset="95%" stopColor={colors.confidence} stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="communicationGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor={colors.communication} stopOpacity={0.25} />
+                  <stop offset="95%" stopColor={colors.communication} stopOpacity={0} />
+                </linearGradient>
+              </defs>
               <CartesianGrid strokeDasharray="3 3" stroke={colors.grid} />
               <XAxis
                 dataKey="label"
@@ -150,8 +164,9 @@ export function ScoreTrendChart({
                   border: `1px solid ${colors.grid}`,
                   backgroundColor: colors.cardBg,
                   color: colors.cardFg,
+                  boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
                 }}
-                labelStyle={{ fontWeight: 600, color: colors.cardFg }}
+                labelStyle={{ fontWeight: 600, color: colors.cardFg, marginBottom: "4px" }}
                 formatter={(value: number, name: string) => {
                   const labels: Record<string, string> = {
                     overall: "Overall",
@@ -172,34 +187,43 @@ export function ScoreTrendChart({
                   return labels[value] || value;
                 }}
               />
-              <Line
+              <Area
                 type="monotone"
                 dataKey="overall"
                 stroke={colors.overall}
                 strokeWidth={2}
+                fill="url(#overallGradient)"
                 dot={{ r: 3, fill: colors.overall }}
                 activeDot={{ r: 5, fill: colors.overall }}
                 connectNulls
+                animationDuration={1000}
+                animationEasing="ease-in-out"
               />
-              <Line
+              <Area
                 type="monotone"
                 dataKey="confidence"
                 stroke={colors.confidence}
                 strokeWidth={2}
+                fill="url(#confidenceGradient)"
                 dot={{ r: 3, fill: colors.confidence }}
                 activeDot={{ r: 5, fill: colors.confidence }}
                 connectNulls
+                animationDuration={1000}
+                animationEasing="ease-in-out"
               />
-              <Line
+              <Area
                 type="monotone"
                 dataKey="communication"
                 stroke={colors.communication}
                 strokeWidth={2}
+                fill="url(#communicationGradient)"
                 dot={{ r: 3, fill: colors.communication }}
                 activeDot={{ r: 5, fill: colors.communication }}
                 connectNulls
+                animationDuration={1000}
+                animationEasing="ease-in-out"
               />
-            </LineChart>
+            </AreaChart>
           </ResponsiveContainer>
         </div>
       )}

@@ -5,8 +5,8 @@ import { TimeRangeSelector } from "../components/TimeRangeSelector";
 import { ScoreTrendChart } from "../components/ScoreTrendChart";
 import { SessionFrequencyChart } from "../components/SessionFrequencyChart";
 import { MetricBreakdown } from "../components/MetricBreakdown";
-import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
 import { ErrorMessage } from "@/shared/components/ErrorMessage";
+import { CardSkeleton, ChartSkeleton } from "@/shared/components/skeletons";
 import type { TimeRange } from "../services/analyticsService";
 
 export function AnalyticsPage() {
@@ -33,8 +33,20 @@ export function AnalyticsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <LoadingSpinner label="Loading analytics..." />
+      <div className="space-y-6">
+        <div className="flex items-center gap-2">
+          <BarChart3 className="h-6 w-6 text-primary" />
+          <h1 className="text-2xl font-bold">Analytics</h1>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <CardSkeleton />
+          <CardSkeleton />
+          <CardSkeleton />
+        </div>
+        <div className="grid gap-6 lg:grid-cols-2">
+          <ChartSkeleton />
+          <ChartSkeleton />
+        </div>
       </div>
     );
   }

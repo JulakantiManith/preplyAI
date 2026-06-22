@@ -3,8 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { useSessionHistory } from "../hooks/useSessionHistory";
 import { SessionList } from "../components/SessionList";
 import { SessionFilters } from "../components/SessionFilters";
-import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
 import { ErrorMessage } from "@/shared/components/ErrorMessage";
+import { EmptyState } from "@/shared/components/EmptyState";
+import { ListSkeleton } from "@/shared/components/skeletons";
+import { ClipboardList } from "lucide-react";
 import type { HistoryFilters } from "../services/historyService";
 
 export function HistoryPage() {
@@ -30,9 +32,7 @@ export function HistoryPage() {
       <SessionFilters filters={filters} onFiltersChange={handleFiltersChange} />
 
       {isLoading && (
-        <div className="flex h-48 items-center justify-center">
-          <LoadingSpinner label="Loading sessions..." />
-        </div>
+        <ListSkeleton rows={5} />
       )}
 
       {isError && (
@@ -46,7 +46,19 @@ export function HistoryPage() {
         />
       )}
 
-      {data && (
+      {data && data.sessions.length === 0 && (
+        <EmptyState
+          icon={ClipboardList}
+          title="No sessions yet"
+          description="Complete your first interview or presentation practice session to see your history here."
+          action={{
+            label: "Start a session",
+            onClick: () => navigate("/interview"),
+          }}
+        />
+      )}
+
+      {data && data.sessions.length > 0 && (
         <SessionList
           sessions={data.sessions}
           page={data.page}

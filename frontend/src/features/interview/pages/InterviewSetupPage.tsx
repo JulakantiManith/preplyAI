@@ -70,7 +70,7 @@ export function InterviewSetupPage() {
   };
 
   return (
-    <div className="py-6">
+    <div className="py-6 animate-in fade-in slide-in-from-bottom-2 duration-400">
       <InterviewSetup
         onStartInterview={handleStartInterview}
         onStartTechnical={handleStartTechnical}
