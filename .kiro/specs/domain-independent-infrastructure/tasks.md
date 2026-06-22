@@ -41,8 +41,8 @@ This plan implements a domain-independent infrastructure layer where all URL res
 - [x] 2. Checkpoint — Ensure all backend tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 3. Backend — Email endpoint guard
-  - [ ] 3.1 Add email availability dependency in `app/main.py` or `app/dependencies.py`
+- [x] 3. Backend — Email endpoint guard
+  - [x] 3.1 Add email availability dependency in `app/main.py` or `app/dependencies.py`
     - Create a FastAPI dependency that checks `settings.get_smtp_enabled()`
     - Return HTTP 503 with `{"detail": "Email functionality is unavailable"}` when SMTP is disabled
     - Apply to any email-sending endpoints
@@ -53,8 +53,8 @@ This plan implements a domain-independent infrastructure layer where all URL res
     - Test request proceeds when SMTP is enabled
     - _Requirements: 4.5_
 
-- [ ] 4. Frontend — Config, Auth Redirect Builder, and integration
-  - [ ] 4.1 Update `frontend/src/shared/lib/supabase.ts` — add auth redirect helpers
+- [x] 4. Frontend — Config, Auth Redirect Builder, and integration
+  - [x] 4.1 Update `frontend/src/shared/lib/supabase.ts` — add auth redirect helpers
     - Add `resolveAppDomain(viteAppDomain, windowOrigin)` function: returns `https://{viteAppDomain}` if valid hostname, else windowOrigin
     - Add `isValidHostname(hostname)` helper (basic RFC 1123 check)
     - Add `buildAuthRedirectUrl(path)` that uses resolved domain + path
@@ -63,7 +63,7 @@ This plan implements a domain-independent infrastructure layer where all URL res
     - Log `console.warn` when VITE_APP_DOMAIN is set but invalid
     - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 9.5, 9.6, 9.7_
 
-  - [ ] 4.2 Update `frontend/src/shared/lib/axios.ts` — use VITE_API_URL with fallback
+  - [x] 4.2 Update `frontend/src/shared/lib/axios.ts` — use VITE_API_URL with fallback
     - Ensure `baseURL` reads from `import.meta.env.VITE_API_URL` with fallback to `http://localhost:8000/api/v1` (already done, verify no hardcoded custom domains)
     - _Requirements: 2.1_
 
@@ -74,24 +74,24 @@ This plan implements a domain-independent infrastructure layer where all URL res
     - Test fallback used when VITE_APP_DOMAIN is invalid
     - _Requirements: 3.1, 3.2, 3.3, 3.6_
 
-- [ ] 5. Checkpoint — Ensure all frontend and backend tests pass
+- [x] 5. Checkpoint — Ensure all frontend and backend tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 6. Environment documentation and recovery guide
-  - [ ] 6.1 Update `backend/.env.example` with all new environment variables
+- [x] 6. Environment documentation and recovery guide
+  - [x] 6.1 Update `backend/.env.example` with all new environment variables
     - Add APP_DOMAIN, FRONTEND_URL, BACKEND_URL, ALLOWED_ORIGINS with format comments
     - Add SMTP_HOST, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD, SMTP_SENDER_EMAIL, SMTP_SENDER_NAME
     - Document expected formats and defaults
     - _Requirements: 7.1, 7.2_
 
-  - [ ] 6.2 Create `DOMAIN_RECOVERY.md` at project root
+  - [x] 6.2 Create `DOMAIN_RECOVERY.md` at project root
     - Document the recovery procedure: update env vars → update Supabase redirect URLs → redeploy
     - List exact variables to change per service (Vercel frontend, Render backend, Supabase dashboard)
     - Include the three domain scenarios: custom domain, platform URLs only, mixed
     - Note that original Vercel/Render URLs always continue working
     - _Requirements: 7.1, 7.2, 7.4, 8.3, 8.4, 8.6_
 
-- [ ] 7. Final checkpoint — Ensure all tests pass
+- [x] 7. Final checkpoint — Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes

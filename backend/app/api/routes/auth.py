@@ -2,7 +2,7 @@
 
 import logging
 
-from fastapi import APIRouter, Header, HTTPException, Request, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 
 from app.api.schemas.auth_schemas import (
     AuthResponse,
@@ -12,7 +12,7 @@ from app.api.schemas.auth_schemas import (
     RegisterRequest,
     ResetPasswordRequest,
 )
-from app.dependencies import CurrentUserDep
+from app.dependencies import CurrentUserDep, require_email_enabled
 from app.services.auth_service import get_auth_service
 
 logger = logging.getLogger(__name__)
@@ -26,7 +26,7 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
     status_code=status.HTTP_201_CREATED,
     summary="Register a new user",
 )
-async def register(request: RegisterRequest):
+async def register(request: RegisterRequest, _email_check: None = Depends(require_email_enabled)):
     """Register a new user account.
 
     Creates a new user with the provided full name, email, and password.
@@ -90,7 +90,7 @@ async def logout(
     response_model=MessageResponse,
     summary="Request password reset",
 )
-async def forgot_password(request: ForgotPasswordRequest):
+async def forgot_password(request: ForgotPasswordRequest, _email_check: None = Depends(require_email_enabled)):
     """Request a password reset email.
 
     Always returns the same success response regardless of whether

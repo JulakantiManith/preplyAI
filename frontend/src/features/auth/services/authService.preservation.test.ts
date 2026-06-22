@@ -19,6 +19,7 @@ vi.mock("@/shared/lib/supabase", () => ({
       signUp: vi.fn(),
     },
   },
+  getEmailVerificationUrl: () => "http://localhost:5173/auth/verify-email",
 }));
 
 import { supabase } from "@/shared/lib/supabase";

@@ -1,4 +1,4 @@
-import { supabase } from "@/shared/lib/supabase";
+import { supabase, getEmailVerificationUrl } from "@/shared/lib/supabase";
 import apiClient from "@/shared/lib/axios";
 import type { RegisterFormData, LoginFormData } from "../schemas/authSchemas";
 
@@ -23,7 +23,10 @@ export async function registerUser(data: RegisterFormData): Promise<AuthResponse
   const { data: authData, error } = await supabase.auth.signUp({
     email: data.email,
     password: data.password,
-    options: { data: { full_name: data.fullName } },
+    options: {
+      data: { full_name: data.fullName },
+      emailRedirectTo: getEmailVerificationUrl(),
+    },
   });
 
   if (error) {
