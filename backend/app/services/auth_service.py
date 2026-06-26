@@ -143,7 +143,13 @@ class AuthService:
             email: Email address to send the reset link to.
         """
         try:
-            self._client.auth.reset_password_for_email(email)
+            from app.config import get_settings
+
+            settings = get_settings()
+            redirect_url = f"{settings.get_resolved_frontend_url()}/auth/callback"
+            self._client.auth.reset_password_for_email(
+                email, options={"redirect_to": redirect_url}
+            )
         except Exception as e:
             # Silently catch all errors to prevent email enumeration
             logger.debug("Forgot password request for %s: %s", email, str(e))

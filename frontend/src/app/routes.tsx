@@ -34,8 +34,10 @@ export function AppRoutes() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="/reset-password" element={<ResetPasswordPage />} />
       </Route>
+
+      {/* Reset password - accessible even when authenticated (recovery flow) */}
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
 
       {/* Auth callback - handles email verification and magic link redirects */}
       <Route path="/auth/callback" element={<AuthCallbackPage />} />

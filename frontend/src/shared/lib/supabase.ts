@@ -75,7 +75,9 @@ export function getEmailVerificationUrl(): string {
 
 /**
  * Get the password reset redirect URL.
+ * Routes through /auth/callback so the Supabase session is properly
+ * established before navigating to the reset password form.
  */
 export function getPasswordResetUrl(): string {
-  return buildAuthRedirectUrl("/reset-password");
+  return buildAuthRedirectUrl("/auth/callback");
 }

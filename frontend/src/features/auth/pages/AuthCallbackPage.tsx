@@ -4,22 +4,50 @@ import { supabase } from "@/shared/lib/supabase";
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
 
 /**
- * Handles Supabase auth redirects (email verification, magic links, etc.).
+ * Handles Supabase auth redirects (email verification, magic links, password recovery).
  *
- * When Supabase redirects back after email verification, it appends tokens
- * to the URL. The Supabase client automatically detects and exchanges them.
- * This page waits for that exchange to complete, then navigates the user
- * to the dashboard (or login on failure).
+ * When Supabase redirects back after email verification or password recovery,
+ * it appends tokens to the URL. The Supabase client automatically detects and
+ * exchanges them. This page waits for that exchange to complete, then navigates
+ * the user to the appropriate destination:
+ * - PASSWORD_RECOVERY → /reset-password
+ * - All other events → /dashboard
  */
 export function AuthCallbackPage() {
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function handleAuthCallback() {
+    let handled = false;
+
+    // Listen for auth state changes to detect the event type
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (handled) return;
+
+        if (event === "PASSWORD_RECOVERY" && session) {
+          handled = true;
+          subscription.unsubscribe();
+          navigate("/reset-password", { replace: true });
+          return;
+        }
+
+        if (session && (event === "SIGNED_IN" || event === "TOKEN_REFRESHED")) {
+          handled = true;
+          subscription.unsubscribe();
+          navigate("/dashboard", { replace: true });
+        }
+      }
+    );
+
+    // Fallback: if the session is already established (tokens were processed
+    // before the listener attached), check and redirect
+    async function checkExistingSession() {
+      // Small delay to let onAuthStateChange fire first
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      if (handled) return;
+
       try {
-        // Supabase JS client auto-detects tokens in URL hash/query params
-        // and exchanges them for a session. We just need to verify it worked.
         const { data, error: sessionError } = await supabase.auth.getSession();
 
         if (sessionError) {
@@ -29,25 +57,18 @@ export function AuthCallbackPage() {
           return;
         }
 
-        if (data.session) {
-          // Session established — user is verified and logged in
-          navigate("/dashboard", { replace: true });
-        } else {
-          // No session yet — might still be exchanging token, listen for changes
-          const { data: { subscription } } = supabase.auth.onAuthStateChange(
-            (_event, session) => {
-              if (session) {
-                subscription.unsubscribe();
-                navigate("/dashboard", { replace: true });
-              }
-            }
-          );
-
-          // Timeout: if no session after 5s, redirect to login
-          setTimeout(() => {
+        if (data.session && !handled) {
+          // Check if URL hash indicates recovery
+          const hash = window.location.hash;
+          if (hash.includes("type=recovery")) {
+            handled = true;
             subscription.unsubscribe();
-            navigate("/login", { replace: true });
-          }, 5000);
+            navigate("/reset-password", { replace: true });
+          } else {
+            handled = true;
+            subscription.unsubscribe();
+            navigate("/dashboard", { replace: true });
+          }
         }
       } catch (err) {
         console.error("[Auth Callback] Unexpected error:", err);
@@ -56,7 +77,21 @@ export function AuthCallbackPage() {
       }
     }
 
-    handleAuthCallback();
+    checkExistingSession();
+
+    // Timeout: if nothing happens after 8s, redirect to login
+    const timeout = setTimeout(() => {
+      if (!handled) {
+        handled = true;
+        subscription.unsubscribe();
+        navigate("/login", { replace: true });
+      }
+    }, 8000);
+
+    return () => {
+      clearTimeout(timeout);
+      subscription.unsubscribe();
+    };
   }, [navigate]);
 
   if (error) {

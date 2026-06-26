@@ -1,36 +1,91 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Loader2, CheckCircle2 } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import { cn } from "@/shared/lib/utils";
-import { resetPasswordSchema } from "../schemas/authSchemas";
-import type { ResetPasswordFormData } from "../schemas/authSchemas";
-import { useAuth } from "../hooks/useAuth";
+import { supabase } from "@/shared/lib/supabase";
+import { z } from "zod";
+
+const passwordSchema = z
+  .string()
+  .min(8, "Password must be at least 8 characters")
+  .regex(/[A-Z]/, "Must contain at least one uppercase letter")
+  .regex(/[a-z]/, "Must contain at least one lowercase letter")
+  .regex(/[0-9]/, "Must contain at least one number");
+
+const resetFormSchema = z.object({
+  newPassword: passwordSchema,
+});
+
+type ResetFormData = z.infer<typeof resetFormSchema>;
 
 export function ResetPasswordForm() {
-  const { resetPassword } = useAuth();
-  const [searchParams] = useSearchParams();
-  const token = searchParams.get("token") ?? "";
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isRecoverySession, setIsRecoverySession] = useState(false);
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
 
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<ResetPasswordFormData>({
-    resolver: zodResolver(resetPasswordSchema),
-    defaultValues: { token },
+  } = useForm<ResetFormData>({
+    resolver: zodResolver(resetFormSchema),
   });
 
-  const onSubmit = async (data: ResetPasswordFormData) => {
+  // Detect if we arrived via a Supabase recovery redirect
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (event === "PASSWORD_RECOVERY" && session) {
+          setIsRecoverySession(true);
+          setIsCheckingSession(false);
+        }
+      }
+    );
+
+    // Also check if there's already an active session (user might have
+    // arrived here with tokens in the URL hash already processed)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        // Check if the URL hash contains recovery indicators
+        const hash = window.location.hash;
+        if (hash.includes("type=recovery") || hash.includes("type=magiclink")) {
+          setIsRecoverySession(true);
+        } else {
+          // User has a session — they likely came from the recovery email
+          setIsRecoverySession(true);
+        }
+      }
+      setIsCheckingSession(false);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const onSubmit = async (data: ResetFormData) => {
     setFormError(null);
     setSuccessMessage(null);
     try {
-      await resetPassword(data.token, data.newPassword);
+      if (isRecoverySession) {
+        // Use Supabase client directly to update password with the active recovery session
+        const { error } = await supabase.auth.updateUser({
+          password: data.newPassword,
+        });
+        if (error) {
+          setFormError(error.message || "Failed to reset password. Please try again.");
+          return;
+        }
+      } else {
+        setFormError("Invalid reset session. Please request a new password reset link.");
+        return;
+      }
       setSuccessMessage("Your password has been reset successfully.");
     } catch (error) {
       if (error instanceof Error) {
@@ -41,11 +96,19 @@ export function ResetPasswordForm() {
     }
   };
 
-  if (!token) {
+  if (isCheckingSession) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (!isRecoverySession) {
     return (
       <div className="space-y-4 text-center">
         <p className="text-sm text-destructive">
-          Invalid reset link. The token is missing.
+          Invalid or expired reset link. Please request a new one.
         </p>
         <Link
           to="/forgot-password"
@@ -65,6 +128,11 @@ export function ResetPasswordForm() {
         <Link
           to="/login"
           className="inline-block text-sm text-primary hover:underline font-medium"
+          onClick={async (e) => {
+            e.preventDefault();
+            await supabase.auth.signOut();
+            navigate("/login");
+          }}
         >
           Sign in with your new password
         </Link>
@@ -82,8 +150,6 @@ export function ResetPasswordForm() {
           {formError}
         </div>
       )}
-
-      <input type="hidden" {...register("token")} />
 
       <div className="space-y-2">
         <label htmlFor="newPassword" className="text-sm font-medium text-foreground">
