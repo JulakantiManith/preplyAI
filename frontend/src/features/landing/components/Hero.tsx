@@ -2,11 +2,10 @@ import { Link } from "react-router-dom";
 import { Button } from "@/shared/components/ui/button";
 import { ThemeToggle } from "@/shared/components/ThemeToggle";
 import { useAuth } from "@/features/auth/hooks/useAuth";
-import { Mic, Sparkles, LayoutDashboard } from "lucide-react";
+import { Sparkles, LayoutDashboard } from "lucide-react";
 
 export function Hero() {
   const { isAuthenticated } = useAuth();
-  const appName = import.meta.env.VITE_APP_NAME || "AI Interview & Presentation Coach";
 
   return (
     <section className="relative overflow-hidden bg-background hero-gradient">
@@ -30,9 +29,10 @@ export function Hero() {
         aria-label="Landing page navigation"
       >
         <div className="flex items-center gap-2">
-          <Mic className="h-6 w-6 text-primary" />
-          <span className="text-lg font-bold text-foreground">
-            {appName}
+          <img src="/logo.png" alt="" className="h-11 w-11 object-contain" />
+          <span className="text-lg font-bold">
+            <span className="text-foreground">Preply </span>
+            <span className="text-blue-600 dark:text-blue-500">AI</span>
           </span>
         </div>
         <div className="flex items-center gap-2">

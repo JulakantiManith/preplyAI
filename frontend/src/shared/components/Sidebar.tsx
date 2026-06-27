@@ -39,7 +39,13 @@ export function Sidebar({ isOpen, onClose, className }: SidebarProps) {
       >
         {/* Mobile close button */}
         <div className="flex h-16 items-center justify-between border-b px-4 md:hidden">
-          <span className="font-semibold">Navigation</span>
+          <div className="flex items-center gap-2">
+            <img src="/logo.png" alt="" className="h-8 w-8 object-contain" />
+            <span className="font-bold">
+              <span className="text-foreground">Preply </span>
+              <span className="text-blue-600 dark:text-blue-500">AI</span>
+            </span>
+          </div>
           <button
             onClick={onClose}
             className="rounded-md p-2 hover:bg-accent transition-colors"

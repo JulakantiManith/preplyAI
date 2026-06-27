@@ -42,8 +42,11 @@ export function Navbar({ onToggleSidebar, className }: NavbarProps) {
 
         {/* Logo / Brand */}
         <Link to="/" className="flex items-center gap-2 font-semibold text-lg">
-          <span className="hidden sm:inline">{import.meta.env.VITE_APP_NAME || "AI Interview & Presentation Coach"}</span>
-          <span className="sm:hidden">AIC</span>
+          <img src="/logo.png" alt="" className="h-11 w-11 object-contain" />
+          <span className="hidden sm:inline font-bold">
+            <span className="text-foreground">Preply </span>
+            <span className="text-blue-600 dark:text-blue-500">AI</span>
+          </span>
         </Link>
 
         {/* Spacer */}
