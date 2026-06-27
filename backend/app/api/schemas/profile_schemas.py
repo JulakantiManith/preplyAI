@@ -17,6 +17,9 @@ class ProfileUpdateRequest(BaseModel):
     skills: list[str] | None = Field(
         default=None, max_length=50, description="List of skills"
     )
+    email_notifications_enabled: bool | None = Field(
+        default=None, description="Enable session completion email notifications"
+    )
 
     @field_validator("target_role")
     @classmethod
@@ -62,6 +65,7 @@ class ProfileResponse(BaseModel):
     experience_level: str | None = None
     skills: list[str] | None = None
     theme_preference: str | None = None
+    email_notifications_enabled: bool = True
     updated_at: str | None = None
 
 

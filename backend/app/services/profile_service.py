@@ -112,10 +112,15 @@ class ProfileService:
                     "experience_level": None,
                     "skills": None,
                     "theme_preference": None,
+                    "email_notifications_enabled": True,
                     "updated_at": None,
                 }
 
-            return response.data[0]
+            profile = response.data[0]
+            # Default email_notifications_enabled to True if not set in DB
+            if "email_notifications_enabled" not in profile or profile["email_notifications_enabled"] is None:
+                profile["email_notifications_enabled"] = True
+            return profile
 
         except HTTPException:
             raise

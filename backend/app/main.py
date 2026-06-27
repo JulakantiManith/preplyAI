@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.middleware.error_handler import register_exception_handlers
 from app.api.routes.analytics import router as analytics_router
 from app.api.routes.auth import router as auth_router
+from app.api.routes.health import router as health_router
 from app.api.routes.history import router as history_router
 from app.api.routes.interview import router as interview_router
 from app.api.routes.presentation import router as presentation_router
@@ -106,6 +107,47 @@ async def lifespan(app: FastAPI):
             settings.smtp_host,
             settings.smtp_sender_email,
         )
+
+        # Optional startup SMTP connectivity validation
+        if settings.email_deliverability_check_enabled:
+            logger.info("Running startup SMTP connectivity check...")
+            try:
+                import aiosmtplib
+
+                use_tls = settings.smtp_port == 465
+                start_tls = not use_tls and settings.smtp_port != 25
+
+                smtp = aiosmtplib.SMTP(
+                    hostname=settings.smtp_host,
+                    port=settings.smtp_port,
+                    use_tls=use_tls,
+                    timeout=10.0,
+                )
+                await smtp.connect()
+                try:
+                    if start_tls:
+                        await smtp.starttls()
+                    if settings.smtp_username and settings.smtp_password:
+                        await smtp.login(
+                            settings.smtp_username, settings.smtp_password
+                        )
+                    logger.info(
+                        "Startup SMTP check passed — authenticated to %s:%d",
+                        settings.smtp_host,
+                        settings.smtp_port,
+                    )
+                finally:
+                    try:
+                        await smtp.quit()
+                    except Exception:
+                        pass
+            except Exception as e:
+                logger.error(
+                    "Startup SMTP check FAILED — %s:%d — %s",
+                    settings.smtp_host,
+                    settings.smtp_port,
+                    str(e),
+                )
     else:
         missing_vars = []
         if not settings.smtp_host:
@@ -194,6 +236,7 @@ def create_app() -> FastAPI:
     # Include feature routers
     v1_router.include_router(analytics_router)
     v1_router.include_router(auth_router)
+    v1_router.include_router(health_router)
     v1_router.include_router(history_router)
     v1_router.include_router(interview_router)
     v1_router.include_router(presentation_router)

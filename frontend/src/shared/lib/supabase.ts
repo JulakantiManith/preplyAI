@@ -53,10 +53,40 @@ export function resolveAppDomain(
 }
 
 /**
+ * Get the explicit auth redirect URL override from VITE_AUTH_REDIRECT_URL.
+ * Returns the URL if set and valid, otherwise undefined.
+ */
+export function getAuthRedirectOverride(): string | undefined {
+  const override = import.meta.env.VITE_AUTH_REDIRECT_URL as string | undefined;
+  if (!override) {
+    return undefined;
+  }
+  try {
+    const url = new URL(override);
+    if (url.protocol === "https:" || url.protocol === "http:") {
+      return override;
+    }
+  } catch {
+    console.warn(
+      `[Auth] VITE_AUTH_REDIRECT_URL is set but invalid: "${override}". Falling back to domain-based URL.`
+    );
+  }
+  return undefined;
+}
+
+/**
  * Build an auth redirect URL by combining the resolved domain with a path.
+ * If VITE_AUTH_REDIRECT_URL is set and valid, it takes precedence over
+ * domain-based construction.
  * Ensures no double slashes between base and path.
  */
 export function buildAuthRedirectUrl(path: string): string {
+  // Check for explicit override first
+  const override = getAuthRedirectOverride();
+  if (override) {
+    return override;
+  }
+
   const base = resolveAppDomain(
     import.meta.env.VITE_APP_DOMAIN as string | undefined,
     window.location.origin
@@ -68,6 +98,7 @@ export function buildAuthRedirectUrl(path: string): string {
 
 /**
  * Get the email verification redirect URL.
+ * Uses VITE_AUTH_REDIRECT_URL if set, otherwise builds from domain + /auth/callback.
  */
 export function getEmailVerificationUrl(): string {
   return buildAuthRedirectUrl("/auth/callback");
@@ -77,7 +108,16 @@ export function getEmailVerificationUrl(): string {
  * Get the password reset redirect URL.
  * Routes through /auth/callback so the Supabase session is properly
  * established before navigating to the reset password form.
+ * Uses VITE_AUTH_REDIRECT_URL if set, otherwise builds from domain + /auth/callback.
  */
 export function getPasswordResetUrl(): string {
+  return buildAuthRedirectUrl("/auth/callback");
+}
+
+/**
+ * Get the OTP sign-in redirect URL.
+ * Uses VITE_AUTH_REDIRECT_URL if set, otherwise builds from domain + /auth/callback.
+ */
+export function getOtpRedirectUrl(): string {
   return buildAuthRedirectUrl("/auth/callback");
 }

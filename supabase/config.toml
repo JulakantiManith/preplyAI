@@ -1,0 +1,121 @@
+# Supabase Configuration for AI Interview & Presentation Coach
+# ============================================================
+#
+# This file documents the recommended Supabase Auth email template
+# configuration. Apply these settings via the Supabase Dashboard:
+#   Authentication → Email Templates
+#
+# Or for self-hosted Supabase, place template files at the paths below
+# and reference them in your Supabase config.
+#
+# Template Variables Available:
+#   {{ .ConfirmationURL }} - The action URL (verify, reset, magic link)
+#   {{ .Token }}           - The token/OTP code
+#   {{ .SiteURL }}         - Your configured Site URL
+#   {{ .Email }}           - The recipient's email address
+#
+# SMTP Configuration:
+#   Set these in the Supabase Dashboard under Authentication → SMTP Settings:
+#   - SMTP Host:     (same as SMTP_HOST in backend .env)
+#   - SMTP Port:     (same as SMTP_PORT in backend .env)
+#   - SMTP User:     (same as SMTP_USERNAME in backend .env)
+#   - SMTP Password: (same as SMTP_PASSWORD in backend .env)
+#   - Sender Email:  (same as SMTP_SENDER_EMAIL in backend .env)
+#   - Sender Name:   (same as SMTP_SENDER_NAME in backend .env)
+
+[project]
+id = ""  # Your Supabase project reference ID
+name = "AI Interview & Presentation Coach"
+
+# =============================================================================
+# AUTH CONFIGURATION
+# =============================================================================
+[auth]
+# Site URL used in email templates via {{ .SiteURL }}
+site_url = ""  # e.g., "https://yourdomain.com" or "http://localhost:5173"
+
+# Additional redirect URLs allowed after email verification
+additional_redirect_urls = []  # e.g., ["https://yourdomain.com/auth/callback"]
+
+# Enable email signup
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = true
+
+# OTP expiry in seconds (600 = 10 minutes)
+otp_length = 6
+otp_expiry = 600
+
+# Magic link expiry in seconds (600 = 10 minutes)
+[auth.email.magic_link]
+enabled = true
+
+# =============================================================================
+# EMAIL TEMPLATES
+# =============================================================================
+# Configure these in the Supabase Dashboard under:
+#   Authentication → Email Templates
+#
+# For each template type, paste the content from the corresponding HTML file.
+
+# --- Confirmation / Email Verification ---
+# Template file: backend/app/templates/emails/verification_email.html
+# Subject: "Verify your email address"
+# Used when: A new user signs up and needs to confirm their email
+[auth.email.template.confirmation]
+subject = "Verify your email address"
+content_path = "./backend/app/templates/emails/verification_email.html"
+
+# --- Password Recovery / Reset ---
+# Template file: backend/app/templates/emails/password_reset_email.html
+# Subject: "Reset your password"
+# Used when: User requests a password reset via forgot-password flow
+[auth.email.template.recovery]
+subject = "Reset your password"
+content_path = "./backend/app/templates/emails/password_reset_email.html"
+
+# --- Magic Link ---
+# Template file: backend/app/templates/emails/magic_link_email.html
+# Subject: "Your sign-in link"
+# Used when: User requests a passwordless magic link login
+[auth.email.template.magic_link]
+subject = "Your sign-in link"
+content_path = "./backend/app/templates/emails/magic_link_email.html"
+
+# --- OTP (Email OTP / Email Change) ---
+# Template file: backend/app/templates/emails/otp_email.html
+# Subject: "Your verification code"
+# Used when: User needs an OTP code for verification (email change, MFA)
+[auth.email.template.email_change]
+subject = "Your verification code"
+content_path = "./backend/app/templates/emails/otp_email.html"
+
+# =============================================================================
+# SMTP CONFIGURATION (for self-hosted or Supabase CLI)
+# =============================================================================
+# For cloud-hosted Supabase, configure SMTP via the Dashboard instead.
+# The values below should mirror your backend/.env SMTP settings.
+[auth.email.smtp]
+# host = ""          # SMTP server hostname
+# port = 587         # SMTP port (587 for STARTTLS, 465 for SSL)
+# user = ""          # SMTP username
+# pass = ""          # SMTP password (use env reference in production)
+# sender_name = ""   # Display name (e.g., "AI Interview Coach")
+# admin_email = ""   # Sender email address
+
+# =============================================================================
+# NOTES
+# =============================================================================
+# 1. All email templates use inline CSS for maximum email client compatibility.
+# 2. Templates support both light and dark mode email clients via
+#    @media (prefers-color-scheme: dark) queries with explicit background colors.
+# 3. Templates use table-based layouts for broad email client support.
+# 4. The "From" address uses SMTP_SENDER_NAME and SMTP_SENDER_EMAIL configured
+#    in the Supabase Dashboard SMTP settings.
+# 5. To update templates:
+#    - Edit the HTML files in backend/app/templates/emails/
+#    - Copy the updated HTML into the Supabase Dashboard Email Templates section
+#    - Or for self-hosted: restart Supabase services after config changes
+# 6. Template variables ({{ .ConfirmationURL }}, {{ .Token }}, {{ .SiteURL }},
+#    {{ .Email }}) are automatically injected by Supabase Auth at send time.

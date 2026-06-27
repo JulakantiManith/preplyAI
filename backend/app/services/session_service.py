@@ -3,9 +3,10 @@
 Orchestrates session creation, answer submission, and session completion.
 Coordinates between question generation, transcription, and persistence.
 
-Requirements: 4.2, 4.3, 4.6, 16.1
+Requirements: 4.2, 4.3, 4.6, 10.1, 16.1
 """
 
+import asyncio
 import logging
 from datetime import datetime, timezone
 from typing import Optional
@@ -566,6 +567,15 @@ class SessionService:
                 str(e),
             )
 
+        # Step 6: Fire session completion email notification (non-blocking)
+        self._fire_session_email_notification(
+            user_id=user_id,
+            session_id=str(session_id),
+            session=session,
+            scores=scores,
+            feedback_data=feedback_data,
+        )
+
         return {
             "session": completed_session,
             "total_answers": len(answers),
@@ -774,3 +784,88 @@ class SessionService:
             "recommendations": feedback_report.recommendations,
             "technical_evaluation": feedback_report.technical_evaluation,
         }
+
+    def _fire_session_email_notification(
+        self,
+        user_id: str,
+        session_id: str,
+        session: dict,
+        scores: dict,
+        feedback_data: Optional[dict],
+    ) -> None:
+        """Fire a non-blocking email notification for session completion.
+
+        Uses asyncio.create_task() for fire-and-forget behavior.
+        Checks user preference before sending. All errors are logged
+        but never raised.
+
+        Requirements: 10.1, 16.1
+        """
+        async def _send_notification():
+            try:
+                from app.services.profile_service import get_profile_service
+                from app.services.email_notification_service import (
+                    send_session_complete_notification,
+                )
+
+                # Check if user has email notifications enabled
+                profile_service = get_profile_service()
+                profile = profile_service.get_profile(user_id)
+                if not profile.get("email_notifications_enabled", True):
+                    logger.debug(
+                        "Email notifications disabled for user %s, skipping",
+                        user_id,
+                    )
+                    return
+
+                # Get user email from Supabase auth
+                from app.integrations.supabase_client import get_supabase_client
+                supabase = get_supabase_client()
+                user_response = supabase.auth.admin.get_user_by_id(user_id)
+                if not user_response or not user_response.user:
+                    logger.warning(
+                        "Could not retrieve user email for notification: user_id=%s",
+                        user_id,
+                    )
+                    return
+                user_email = user_response.user.email
+                if not user_email:
+                    logger.warning(
+                        "User %s has no email address, skipping notification",
+                        user_id,
+                    )
+                    return
+
+                # Build session summary
+                interview_type = session.get("interview_type", "interview")
+                session_type_display = interview_type.replace("_", " ").title() + " Interview"
+
+                strengths = feedback_data.get("strengths", []) if feedback_data else []
+                weaknesses = feedback_data.get("weaknesses", []) if feedback_data else []
+
+                session_summary = {
+                    "session_type": session_type_display,
+                    "completed_at": session.get("completed_at", ""),
+                    "overall_score": scores.get("overall_score"),
+                    "strengths": strengths,
+                    "weaknesses": weaknesses,
+                    "session_id": session_id,
+                }
+
+                await send_session_complete_notification(user_email, session_summary)
+
+            except Exception as e:
+                logger.error(
+                    "Error in session email notification task for session %s: %s",
+                    session_id,
+                    str(e),
+                )
+
+        try:
+            asyncio.create_task(_send_notification())
+        except Exception as e:
+            logger.error(
+                "Failed to create email notification task for session %s: %s",
+                session_id,
+                str(e),
+            )

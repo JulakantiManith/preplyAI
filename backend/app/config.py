@@ -50,6 +50,9 @@ class Settings(BaseSettings):
     smtp_sender_email: str = ""
     smtp_sender_name: str = ""
 
+    # Email deliverability check (optional startup validation)
+    email_deliverability_check_enabled: bool = False
+
     def get_resolved_frontend_url(self) -> str:
         """Resolve the frontend URL, stripping trailing slashes.
 

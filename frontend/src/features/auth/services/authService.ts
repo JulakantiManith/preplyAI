@@ -1,4 +1,4 @@
-import { supabase, getEmailVerificationUrl } from "@/shared/lib/supabase";
+import { supabase, getEmailVerificationUrl, getPasswordResetUrl, getOtpRedirectUrl } from "@/shared/lib/supabase";
 import apiClient from "@/shared/lib/axios";
 import type { RegisterFormData, LoginFormData } from "../schemas/authSchemas";
 
@@ -98,10 +98,23 @@ export async function logoutUser(): Promise<void> {
 }
 
 export async function forgotPassword(email: string): Promise<MessageResponse> {
-  const response = await apiClient.post<MessageResponse>("/auth/forgot-password", {
-    email,
+  // Call Supabase directly with the password reset redirect URL
+  // This ensures the reset email contains the correct production redirect URL
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: getPasswordResetUrl(),
   });
-  return response.data;
+
+  if (error) {
+    console.error("[Auth] Password reset request failed:", {
+      code: error.code,
+      message: error.message,
+      status: error.status,
+    });
+    // Return generic success message regardless of error to prevent email enumeration
+    // (per requirement 1.4)
+  }
+
+  return { message: "If an account exists with that email, a password reset link has been sent." };
 }
 
 export async function resetPassword(
@@ -113,4 +126,30 @@ export async function resetPassword(
     new_password: newPassword,
   });
   return response.data;
+}
+
+/**
+ * Sign in with a magic link (OTP) sent to the user's email.
+ * Uses the production-aware redirect URL for the magic link callback.
+ */
+export async function signInWithOtp(email: string): Promise<MessageResponse> {
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: {
+      emailRedirectTo: getOtpRedirectUrl(),
+    },
+  });
+
+  if (error) {
+    console.error("[Auth] OTP sign-in failed:", {
+      code: error.code,
+      message: error.message,
+      status: error.status,
+    });
+    const authError: AuthError = new Error(error.message || "Failed to send magic link.");
+    authError.code = error.code;
+    throw authError;
+  }
+
+  return { message: "A magic link has been sent to your email." };
 }

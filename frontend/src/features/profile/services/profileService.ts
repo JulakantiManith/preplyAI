@@ -8,6 +8,7 @@ interface ProfileApiResponse {
   experience_level: string | null;
   skills: string[] | null;
   theme_preference: string | null;
+  email_notifications_enabled: boolean;
   updated_at: string | null;
 }
 
@@ -42,6 +43,7 @@ export interface ProfileData {
   experienceLevel: string | null;
   skills: string[];
   themePreference: string | null;
+  emailNotificationsEnabled: boolean;
   updatedAt: string | null;
 }
 
@@ -49,6 +51,7 @@ export interface ProfileUpdateData {
   targetRole?: string;
   experienceLevel?: string;
   skills?: string[];
+  emailNotificationsEnabled?: boolean;
 }
 
 export interface ResumeUploadData {
@@ -82,6 +85,7 @@ function mapProfileResponse(data: ProfileApiResponse): ProfileData {
     experienceLevel: data.experience_level,
     skills: data.skills ?? [],
     themePreference: data.theme_preference,
+    emailNotificationsEnabled: data.email_notifications_enabled,
     updatedAt: data.updated_at,
   };
 }
@@ -123,6 +127,8 @@ export async function updateProfile(data: ProfileUpdateData): Promise<ProfileDat
   if (data.targetRole !== undefined) payload.target_role = data.targetRole;
   if (data.experienceLevel !== undefined) payload.experience_level = data.experienceLevel;
   if (data.skills !== undefined) payload.skills = data.skills;
+  if (data.emailNotificationsEnabled !== undefined)
+    payload.email_notifications_enabled = data.emailNotificationsEnabled;
 
   const response = await apiClient.put<ProfileApiResponse>("/profile", payload);
   return mapProfileResponse(response.data);

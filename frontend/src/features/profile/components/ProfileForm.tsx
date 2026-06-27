@@ -21,6 +21,7 @@ const profileSchema = z.object({
     .enum(["", "beginner", "intermediate", "advanced", "senior", "lead"])
     .optional(),
   skills: z.string().optional(),
+  emailNotificationsEnabled: z.boolean().optional(),
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
@@ -42,6 +43,7 @@ export function ProfileForm() {
       targetRole: "",
       experienceLevel: "",
       skills: "",
+      emailNotificationsEnabled: true,
     },
   });
 
@@ -52,6 +54,7 @@ export function ProfileForm() {
         targetRole: profile.targetRole ?? "",
         experienceLevel: (profile.experienceLevel as ProfileFormData["experienceLevel"]) ?? "",
         skills: profile.skills.join(", "),
+        emailNotificationsEnabled: profile.emailNotificationsEnabled,
       });
     }
   }, [profile, reset]);
@@ -69,6 +72,7 @@ export function ProfileForm() {
         targetRole: data.targetRole || undefined,
         experienceLevel: data.experienceLevel || undefined,
         skills,
+        emailNotificationsEnabled: data.emailNotificationsEnabled,
       });
 
       setSuccessMessage("Profile updated successfully.");
@@ -190,6 +194,25 @@ export function ProfileForm() {
             {errors.skills.message}
           </p>
         )}
+      </div>
+
+      <div className="flex items-center justify-between rounded-md border border-input bg-background px-4 py-3">
+        <div className="space-y-0.5">
+          <label htmlFor="emailNotificationsEnabled" className="text-sm font-medium text-foreground cursor-pointer">
+            Email notifications
+          </label>
+          <p className="text-xs text-muted-foreground">
+            Receive email summaries when you complete a session.
+          </p>
+        </div>
+        <input
+          id="emailNotificationsEnabled"
+          type="checkbox"
+          role="switch"
+          className="h-5 w-5 rounded border-input text-primary focus:ring-2 focus:ring-ring focus:ring-offset-2 cursor-pointer"
+          aria-describedby="emailNotifications-hint"
+          {...register("emailNotificationsEnabled")}
+        />
       </div>
 
       <Button type="submit" disabled={isSubmitting}>
